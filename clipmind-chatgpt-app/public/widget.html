@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ClipMind</title>
+    <title>AI Summarizer</title>
     <style>
       :root {
         color: #111827;
@@ -217,7 +217,7 @@
   <body>
     <main>
       <section class="panel hero">
-        <p class="eyebrow">ClipMind</p>
+        <p class="eyebrow">AI Summarizer</p>
         <div class="section-title">
           <h1 id="title">Waiting for a source</h1>
           <span class="ar-label">بانتظار المحتوى</span>
@@ -225,11 +225,11 @@
         <div class="bilingual">
           <div class="lang-card">
             <h3>English Summary</h3>
-            <p id="summary" dir="auto">Ask ClipMind to analyze pasted text, transcript notes, a lecture, podcast, meeting, article, or YouTube transcript.</p>
+            <p id="summary" dir="auto">Ask AI Summarizer to analyze pasted text, transcript notes, a lecture, podcast, meeting, article, or YouTube transcript.</p>
           </div>
           <div class="lang-card rtl">
             <h3>الملخص العربي</h3>
-            <p id="summary-ar" dir="auto">اطلب من ClipMind تحليل نص أو ملاحظات أو تفريغ محاضرة أو اجتماع أو مقال أو يوتيوب.</p>
+            <p id="summary-ar" dir="auto">اطلب من AI Summarizer تحليل نص أو ملاحظات أو تفريغ محاضرة أو اجتماع أو مقال أو يوتيوب.</p>
           </div>
         </div>
         <div class="grid">
@@ -359,10 +359,10 @@
         titleEl.dir = "auto";
         summaryEl.textContent =
           toolOutput?.summary ??
-          "Ask ClipMind to analyze pasted text, transcript notes, a lecture, podcast, meeting, article, or YouTube transcript.";
+          "Ask AI Summarizer to analyze pasted text, transcript notes, a lecture, podcast, meeting, article, or YouTube transcript.";
         summaryArEl.textContent =
           toolOutput?.summaryAr ??
-          "اطلب من ClipMind تحليل نص أو ملاحظات أو تفريغ محاضرة أو اجتماع أو مقال أو يوتيوب.";
+          "اطلب من AI Summarizer تحليل نص أو ملاحظات أو تفريغ محاضرة أو اجتماع أو مقال أو يوتيوب.";
         wordsEl.textContent = String(toolOutput?.stats?.words ?? 0);
         minutesEl.textContent = String(toolOutput?.stats?.estimatedReadingMinutes ?? 0);
         sourceEl.textContent = toolOutput?.sourceType ?? "text";
@@ -512,14 +512,14 @@
             keyPoints[0] +
             "\n\n" +
             keyPoints[1] +
-            "\n\nSaved as a clean ClipMind summary.",
+            "\n\nSaved as a clean AI Summarizer summary.",
           reusablePostAr:
             title +
             "\n\n" +
             keyPoints[0] +
             "\n\n" +
             keyPoints[1] +
-            "\n\nتم حفظه كملخص منظم من ClipMind.",
+            "\n\nتم حفظه كملخص منظم من AI Summarizer.",
           stats: {
             characters: 438,
             words: 69,
@@ -569,7 +569,7 @@
           content: [
             {
               type: "text",
-              text: "Improve this ClipMind brief in both Arabic and English. اجعل الملخص أقصر وأوضح وأكثر فائدة بالعربي والإنجليزي.",
+              text: "Improve this AI Summarizer brief in both Arabic and English. اجعل الملخص أقصر وأوضح وأكثر فائدة بالعربي والإنجليزي.",
             },
           ],
         });

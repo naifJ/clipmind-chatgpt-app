@@ -1,6 +1,6 @@
-# ClipMind ChatGPT App
+# AI Summarizer ChatGPT App
 
-ClipMind is a starter ChatGPT App that turns source content into a structured brief with:
+AI Summarizer is a starter ChatGPT App that turns source content into a structured brief with:
 
 - summary
 - key points
@@ -48,13 +48,13 @@ http://localhost:8787/preview
 2. Expose it with an HTTPS tunnel, for example `ngrok http 8787`.
 3. In ChatGPT, enable Developer Mode in Apps & Connectors advanced settings.
 4. Create a new app/connector that points to the tunneled URL plus `/mcp`. If the UI specifically asks for an SSE URL, use `/sse`.
-5. Ask ChatGPT to use ClipMind to analyze pasted content.
+5. Ask ChatGPT to use AI Summarizer to analyze pasted content.
 
 ## Main Tool
 
 `analyze_content`
 
-Use this when the user wants to turn pasted text, transcript notes, YouTube transcript notes, article notes, podcast notes, meeting notes, or lecture notes into a concise ClipMind brief.
+Use this when the user wants to turn pasted text, transcript notes, YouTube transcript notes, article notes, podcast notes, meeting notes, or lecture notes into a concise AI Summarizer brief.
 
 Inputs:
 

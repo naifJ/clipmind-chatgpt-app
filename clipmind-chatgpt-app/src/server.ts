@@ -93,7 +93,7 @@ function makeTitle(content: string, fallback?: string): string {
     .map((line) => line.trim())
     .find(Boolean);
 
-  return (firstLine || "ClipMind analysis").slice(0, 90);
+  return (firstLine || "AI Summarizer analysis").slice(0, 90);
 }
 
 function createSummary(content: string, style: OutputStyle): string {
@@ -107,7 +107,7 @@ function createSummary(content: string, style: OutputStyle): string {
   }[style];
 
   if (!opening) {
-    return `${styleLabel}: Add source text, a transcript, or notes and ClipMind will turn it into a concise working brief.`;
+    return `${styleLabel}: Add source text, a transcript, or notes and AI Summarizer will turn it into a concise working brief.`;
   }
 
   return `${styleLabel}: ${opening}`;
@@ -124,7 +124,7 @@ function createArabicSummary(content: string, style: OutputStyle): string {
   }[style];
 
   if (!opening) {
-    return `${styleLabel}: أضف نصًا أو تفريغًا أو ملاحظات وسيحوّلها ClipMind إلى ملخص عملي ومنظم.`;
+    return `${styleLabel}: أضف نصًا أو تفريغًا أو ملاحظات وسيحوّلها AI Summarizer إلى ملخص عملي ومنظم.`;
   }
 
   return `${styleLabel}: ${opening}`;
@@ -191,19 +191,19 @@ function createReusablePost(title: string, keyPoints: string[]): string {
   const lead = keyPoints[0] || "Here is the core idea worth remembering.";
   const support = keyPoints[1] || "The source has enough signal to turn into a practical brief.";
 
-  return `${title}\n\n${lead}\n\n${support}\n\nSaved as a clean ClipMind summary.`;
+  return `${title}\n\n${lead}\n\n${support}\n\nSaved as a clean AI Summarizer summary.`;
 }
 
 function createArabicReusablePost(title: string, keyPoints: string[]): string {
   const lead = keyPoints[0] || "هذه هي الفكرة الأساسية التي تستحق الحفظ.";
   const support = keyPoints[1] || "المصدر يحتوي على نقاط كافية لتحويلها إلى ملخص عملي.";
 
-  return `${title}\n\n${lead}\n\n${support}\n\nتم حفظه كملخص منظم من ClipMind.`;
+  return `${title}\n\n${lead}\n\n${support}\n\nتم حفظه كملخص منظم من AI Summarizer.`;
 }
 
 function createAppServer(): McpServer {
   const server = new McpServer({
-    name: "ClipMind",
+    name: "AI Summarizer",
     version: "0.1.0",
   });
 
@@ -227,7 +227,7 @@ function createAppServer(): McpServer {
               },
             },
             "openai/widgetDescription":
-              "ClipMind shows bilingual English and Arabic summaries, key points, action items, and reusable posts from source content.",
+              "AI Summarizer shows bilingual English and Arabic summaries, key points, action items, and reusable posts from source content.",
           },
         },
       ],
@@ -240,7 +240,7 @@ function createAppServer(): McpServer {
     {
       title: "Analyze content",
       description:
-        "Use this when the user wants to turn pasted text, transcript notes, a YouTube transcript, article notes, podcast notes, meeting notes, or lecture notes into a concise bilingual ClipMind brief in Arabic and English.",
+        "AI Summarizer turns pasted text, transcript notes, YouTube transcripts, article notes, podcast notes, meeting notes, and lecture notes into concise bilingual Arabic-English briefs.",
       inputSchema: {
         content: z
           .string()
@@ -249,7 +249,7 @@ function createAppServer(): McpServer {
         title: z
           .string()
           .optional()
-          .describe("Optional source title. If absent, ClipMind derives one from the content."),
+          .describe("Optional source title. If absent, AI Summarizer derives one from the content."),
         sourceType: sourceTypeSchema
           .default("text")
           .describe("The kind of source being analyzed."),
@@ -270,8 +270,8 @@ function createAppServer(): McpServer {
       _meta: {
         ui: { resourceUri: WIDGET_URI },
         "openai/outputTemplate": WIDGET_URI,
-        "openai/toolInvocation/invoking": "Building ClipMind brief / جاري إنشاء الملخص",
-        "openai/toolInvocation/invoked": "ClipMind brief ready / الملخص جاهز",
+        "openai/toolInvocation/invoking": "Building AI Summarizer brief / جاري إنشاء الملخص",
+        "openai/toolInvocation/invoked": "AI Summarizer brief ready / الملخص جاهز",
       },
     },
     async ({
@@ -322,7 +322,7 @@ function createAppServer(): McpServer {
           {
             type: "text" as const,
             text:
-              "ClipMind created a bilingual structured brief. / أنشأ ClipMind ملخصًا منظمًا بالعربي والإنجليزي.",
+              "AI Summarizer created a bilingual structured brief. / أنشأ AI Summarizer ملخصًا منظمًا بالعربي والإنجليزي.",
           },
         ],
         structuredContent,
@@ -367,7 +367,7 @@ createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/") {
-    res.writeHead(200, { "content-type": "text/plain" }).end("ClipMind MCP server");
+    res.writeHead(200, { "content-type": "text/plain" }).end("AI Summarizer MCP server");
     return;
   }
 
@@ -471,6 +471,6 @@ createServer(async (req, res) => {
 
   res.writeHead(404).end("Not Found");
 }).listen(port, () => {
-  console.log("ClipMind MCP server listening on http://localhost:" + port + MCP_PATH);
-  console.log("ClipMind SSE endpoint available on http://localhost:" + port + SSE_PATH);
+  console.log("AI Summarizer MCP server listening on http://localhost:" + port + MCP_PATH);
+  console.log("AI Summarizer SSE endpoint available on http://localhost:" + port + SSE_PATH);
 });

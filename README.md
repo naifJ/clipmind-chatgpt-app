@@ -1,6 +1,6 @@
-# ClipMind
+# AI Summarizer
 
-ClipMind is a bilingual Arabic-English ChatGPT App that turns notes, transcripts, lectures, meetings, and articles into structured summaries, key points, action items, and reusable posts.
+AI Summarizer is a bilingual Arabic-English ChatGPT App that turns notes, transcripts, lectures, meetings, and articles into structured summaries, key points, action items, and reusable posts.
 
 The app is built as:
 

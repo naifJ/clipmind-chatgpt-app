@@ -1,4 +1,4 @@
-# ClipMind Launch Checklist
+# AI Summarizer Launch Checklist
 
 ## App Archetype
 
@@ -10,7 +10,7 @@ The app uses one MCP server and one vanilla HTML widget. This is the fastest sta
 
 ### `analyze_content`
 
-Use this when the user wants to turn pasted text, transcript notes, YouTube transcript notes, article notes, podcast notes, meeting notes, or lecture notes into a concise bilingual ClipMind brief in Arabic and English.
+Use this when the user wants to turn pasted text, transcript notes, YouTube transcript notes, article notes, podcast notes, meeting notes, or lecture notes into a concise bilingual AI Summarizer brief in Arabic and English.
 
 Inputs:
 
@@ -57,7 +57,7 @@ No OpenAI API key is required for the current MVP because ChatGPT supplies the r
 Name:
 
 ```txt
-ClipMind
+AI Summarizer
 ```
 
 Description:
@@ -81,19 +81,19 @@ No authentication
 ## Test Prompts
 
 ```txt
-Use ClipMind to analyze this content in Arabic and English:
+Use AI Summarizer to analyze this content in Arabic and English:
 
 Telegram Mini Apps and ChatGPT Apps let builders distribute software inside apps people already use. The best early products are focused tools, not generic assistants.
 ```
 
 ```txt
-Use ClipMind to summarize these meeting notes in executive style in Arabic and English:
+Use AI Summarizer to summarize these meeting notes in executive style in Arabic and English:
 
 We reviewed product launch priorities, agreed to focus on onboarding, and assigned follow-up tasks for analytics, landing page copy, and user interviews.
 ```
 
 ```txt
-Use ClipMind to turn this lecture into study notes:
+Use AI Summarizer to turn this lecture into study notes:
 
 Artificial intelligence systems can classify, summarize, translate, and generate content. Students should compare model outputs, verify facts, and save concise notes for review.
 ```
