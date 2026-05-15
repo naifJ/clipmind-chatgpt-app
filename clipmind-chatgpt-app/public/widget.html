@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ClipMind</title>
+    <style>
+      :root {
+        color: #111827;
+        font-family: "Inter", system-ui, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        width: 100%;
+        padding: 0;
+        background: #f7f8fb;
+      }
+
+      main {
+        width: 100%;
+        max-width: none;
+        min-height: 100vh;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.4fr);
+        gap: 16px;
+        padding: 16px;
+        align-items: start;
+      }
+
+      .hero {
+        position: sticky;
+        top: 16px;
+      }
+
+      .content {
+        display: grid;
+        gap: 16px;
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        color: #475569;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.15;
+      }
+
+      p {
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .panel {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid #dbe2ea;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .section-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .section-title h2,
+      .section-title h1 {
+        margin: 0;
+      }
+
+      .ar-label {
+        color: #475569;
+        direction: rtl;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .metric {
+        padding: 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fbfdff;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 18px;
+      }
+
+      .metric span {
+        color: #64748b;
+        font-size: 12px;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .bilingual {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .lang-card {
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fbfdff;
+      }
+
+      .lang-card h3 {
+        margin: 0;
+        color: #475569;
+        font-size: 12px;
+      }
+
+      .rtl {
+        direction: rtl;
+        text-align: right;
+      }
+
+      ul {
+        margin: 0;
+        padding-inline-start: 20px;
+      }
+
+      li + li {
+        margin-top: 6px;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #111827;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font: inherit;
+        font-weight: 600;
+        color: white;
+        background: #111827;
+        cursor: pointer;
+      }
+
+      button[hidden] {
+        display: none;
+      }
+
+      button.secondary {
+        color: #111827;
+        background: #ffffff;
+      }
+
+      .meta {
+        color: #64748b;
+        font-size: 13px;
+      }
+
+      .post {
+        white-space: pre-wrap;
+        font-size: 13px;
+        color: #334155;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      @media (max-width: 760px) {
+        main {
+          grid-template-columns: 1fr;
+          padding: 12px;
+        }
+
+        .hero {
+          position: static;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .bilingual {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="panel hero">
+        <p class="eyebrow">ClipMind</p>
+        <div class="section-title">
+          <h1 id="title">Waiting for a source</h1>
+          <span class="ar-label">بانتظار المحتوى</span>
+        </div>
+        <div class="bilingual">
+          <div class="lang-card">
+            <h3>English Summary</h3>
+            <p id="summary" dir="auto">Ask ClipMind to analyze pasted text, transcript notes, a lecture, podcast, meeting, article, or YouTube transcript.</p>
+          </div>
+          <div class="lang-card rtl">
+            <h3>الملخص العربي</h3>
+            <p id="summary-ar" dir="auto">اطلب من ClipMind تحليل نص أو ملاحظات أو تفريغ محاضرة أو اجتماع أو مقال أو يوتيوب.</p>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="metric">
+            <strong id="words">0</strong>
+            <span>words / كلمات</span>
+          </div>
+          <div class="metric">
+            <strong id="minutes">0</strong>
+            <span>min read / دقيقة قراءة</span>
+          </div>
+          <div class="metric">
+            <strong id="source">text</strong>
+            <span>source / المصدر</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="fullscreen-button" type="button">Open Fullscreen / فتح بحجم كامل</button>
+          <button id="follow-up-button" class="secondary" type="button">
+            Improve With ChatGPT / حسّن الملخص
+          </button>
+        </div>
+      </section>
+
+      <div class="content">
+        <section class="panel">
+          <div class="section-title">
+            <h2>Key Points</h2>
+            <span class="ar-label">النقاط الرئيسية</span>
+          </div>
+          <div class="bilingual">
+            <div class="lang-card">
+              <h3>English</h3>
+              <ul id="key-points"></ul>
+            </div>
+            <div class="lang-card rtl">
+              <h3>العربية</h3>
+              <ul id="key-points-ar"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">
+            <h2>Action Items</h2>
+            <span class="ar-label">خطوات العمل</span>
+          </div>
+          <div class="bilingual">
+            <div class="lang-card">
+              <h3>English</h3>
+              <ul id="action-items"></ul>
+            </div>
+            <div class="lang-card rtl">
+              <h3>العربية</h3>
+              <ul id="action-items-ar"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">
+            <h2>Reusable Post</h2>
+            <span class="ar-label">منشور جاهز</span>
+          </div>
+          <div class="bilingual">
+            <div class="lang-card">
+              <h3>English</h3>
+              <p class="post" id="post" dir="auto">The reusable post will appear here.</p>
+            </div>
+            <div class="lang-card rtl">
+              <h3>العربية</h3>
+              <p class="post" id="post-ar" dir="auto">سيظهر المنشور العربي الجاهز هنا.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <button id="tool-button" type="button">Load Demo Brief / تحميل مثال</button>
+          <div class="meta" id="meta">MCP Apps bridge ready.</div>
+        </section>
+      </div>
+    </main>
+
+    <script type="module">
+      const titleEl = document.querySelector("#title");
+      const summaryEl = document.querySelector("#summary");
+      const summaryArEl = document.querySelector("#summary-ar");
+      const wordsEl = document.querySelector("#words");
+      const minutesEl = document.querySelector("#minutes");
+      const sourceEl = document.querySelector("#source");
+      const keyPointsEl = document.querySelector("#key-points");
+      const keyPointsArEl = document.querySelector("#key-points-ar");
+      const actionItemsEl = document.querySelector("#action-items");
+      const actionItemsArEl = document.querySelector("#action-items-ar");
+      const postEl = document.querySelector("#post");
+      const postArEl = document.querySelector("#post-ar");
+      const metaEl = document.querySelector("#meta");
+      const toolButtonEl = document.querySelector("#tool-button");
+      const fullscreenButtonEl = document.querySelector("#fullscreen-button");
+      const followUpButtonEl = document.querySelector("#follow-up-button");
+
+      let toolOutput = null;
+      let rpcId = 0;
+      const pendingRequests = new Map();
+      const isStandalonePreview =
+        window.parent === window || window.location.protocol === "file:";
+
+      const renderList = (element, items, fallback) => {
+        element.replaceChildren(
+          ...(items?.length
+            ? items.map((item) => {
+                const li = document.createElement("li");
+                li.textContent = item;
+                li.dir = "auto";
+                return li;
+              })
+            : [document.createElement("li")])
+        );
+
+        if (!items?.length) {
+          element.firstElementChild.textContent = fallback;
+        }
+      };
+
+      const render = () => {
+        titleEl.textContent = toolOutput?.title ?? "Waiting for a source";
+        titleEl.dir = "auto";
+        summaryEl.textContent =
+          toolOutput?.summary ??
+          "Ask ClipMind to analyze pasted text, transcript notes, a lecture, podcast, meeting, article, or YouTube transcript.";
+        summaryArEl.textContent =
+          toolOutput?.summaryAr ??
+          "اطلب من ClipMind تحليل نص أو ملاحظات أو تفريغ محاضرة أو اجتماع أو مقال أو يوتيوب.";
+        wordsEl.textContent = String(toolOutput?.stats?.words ?? 0);
+        minutesEl.textContent = String(toolOutput?.stats?.estimatedReadingMinutes ?? 0);
+        sourceEl.textContent = toolOutput?.sourceType ?? "text";
+        postEl.textContent = toolOutput?.reusablePost ?? "The reusable post will appear here.";
+        postArEl.textContent = toolOutput?.reusablePostAr ?? "سيظهر المنشور العربي الجاهز هنا.";
+
+        renderList(keyPointsEl, toolOutput?.keyPoints, "No key points yet.");
+        renderList(keyPointsArEl, toolOutput?.keyPointsAr, "لا توجد نقاط بعد.");
+        renderList(actionItemsEl, toolOutput?.actionItems, "No action items yet.");
+        renderList(actionItemsArEl, toolOutput?.actionItemsAr, "لا توجد خطوات عمل بعد.");
+
+        const theme = window.openai?.theme ?? "bridge-only";
+        metaEl.textContent =
+          "Runtime / التشغيل: " +
+          (window.openai ? "MCP Apps bridge + optional window.openai" : "MCP Apps bridge only") +
+          " | Theme: " +
+          theme;
+      };
+
+      const rpcNotify = (method, params) => {
+        if (isStandalonePreview) {
+          return;
+        }
+
+        window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+      };
+
+      const rpcRequest = (method, params) =>
+        new Promise((resolve, reject) => {
+          if (isStandalonePreview) {
+            reject(new Error("MCP Apps bridge is not available in standalone preview."));
+            return;
+          }
+
+          const id = ++rpcId;
+          pendingRequests.set(id, { resolve, reject });
+          window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+        });
+
+      window.addEventListener(
+        "message",
+        (event) => {
+          if (event.source !== window.parent) {
+            return;
+          }
+
+          const message = event.data;
+          if (!message || message.jsonrpc !== "2.0") {
+            return;
+          }
+
+          if (typeof message.id === "number") {
+            const pending = pendingRequests.get(message.id);
+            if (!pending) {
+              return;
+            }
+
+            pendingRequests.delete(message.id);
+            if (message.error) {
+              pending.reject(message.error);
+              return;
+            }
+
+            pending.resolve(message.result);
+            return;
+          }
+
+          if (message.method === "ui/notifications/tool-result") {
+            toolOutput = message.params?.structuredContent ?? null;
+            render();
+          }
+        },
+        { passive: true }
+      );
+
+      const initializeBridge = async () => {
+        if (isStandalonePreview) {
+          metaEl.textContent =
+            "Preview mode / وضع المعاينة: الأزرار تعمل محليًا، أما داخل ChatGPT فتستخدم MCP bridge.";
+          return;
+        }
+
+        await rpcRequest("ui/initialize", {
+          appInfo: { name: "clipmind-widget", version: "0.1.0" },
+          appCapabilities: {},
+          protocolVersion: "2026-01-26",
+        });
+        rpcNotify("ui/notifications/initialized", {});
+      };
+
+      const bridgeReady = initializeBridge();
+
+      const requestFullscreen = async () => {
+        if (isStandalonePreview) {
+          metaEl.textContent =
+            "Fullscreen works inside ChatGPT. / وضع الشاشة الكاملة يعمل داخل ChatGPT.";
+          return;
+        }
+
+        try {
+          await window.openai?.requestDisplayMode?.({ mode: "fullscreen" });
+        } catch {
+          // Some hosts may keep the widget inline. The wide layout still fills available space.
+        }
+      };
+
+      bridgeReady.then(requestFullscreen);
+
+      fullscreenButtonEl.addEventListener("click", async () => {
+        await bridgeReady;
+        await requestFullscreen();
+      });
+
+      const createStandaloneDemo = () => {
+        const title = "Demo: Telegram and ChatGPT app opportunity";
+        const keyPoints = [
+          "Telegram Mini Apps and ChatGPT Apps let builders distribute software inside apps people already use.",
+          "The strongest early products are focused tools, not generic assistants.",
+          "A summary app can accept YouTube transcripts, voice notes, meeting notes, articles, and lectures.",
+          "It can return a concise brief, key points, action items, and a reusable social post.",
+        ];
+
+        return {
+          title,
+          sourceType: "article",
+          outputStyle: "creator",
+          language: "bilingual",
+          summary:
+            "Creator brief: Telegram Mini Apps and ChatGPT Apps let builders distribute software inside apps people already use. The strongest early products are focused tools, not generic assistants.",
+          summaryAr:
+            "ملخص لصانع محتوى: تطبيقات Telegram وChatGPT تتيح للمطورين توزيع أدوات داخل التطبيقات التي يستخدمها الناس يوميًا. أقوى المنتجات المبكرة تكون مركزة وليست مساعدات عامة.",
+          keyPoints,
+          keyPointsAr: keyPoints.map((point) => `نقطة مهمة: ${point}`),
+          actionItems: [
+            "Ask ChatGPT to expand the brief into a cleaner final summary.",
+            "Save the key points that matter and remove anything off-topic.",
+            "Convert the brief into a hook, outline, and caption.",
+          ],
+          actionItemsAr: [
+            "اطلب من ChatGPT توسيع الملخص وتحويله إلى نسخة نهائية أوضح.",
+            "احفظ النقاط المهمة واحذف أي تفاصيل غير مرتبطة بهدفك.",
+            "حوّل الملخص إلى hook وخطوط عريضة وتعليق جاهز للنشر.",
+          ],
+          reusablePost:
+            title +
+            "\n\n" +
+            keyPoints[0] +
+            "\n\n" +
+            keyPoints[1] +
+            "\n\nSaved as a clean ClipMind summary.",
+          reusablePostAr:
+            title +
+            "\n\n" +
+            keyPoints[0] +
+            "\n\n" +
+            keyPoints[1] +
+            "\n\nتم حفظه كملخص منظم من ClipMind.",
+          stats: {
+            characters: 438,
+            words: 69,
+            estimatedReadingMinutes: 1,
+          },
+        };
+      };
+
+      toolButtonEl.addEventListener("click", async () => {
+        await bridgeReady;
+
+        if (isStandalonePreview) {
+          toolOutput = createStandaloneDemo();
+          render();
+          metaEl.textContent =
+            "Loaded local demo. / تم تحميل مثال محلي. داخل ChatGPT سيستدعي الزر أداة MCP الحقيقية.";
+          return;
+        }
+
+        const response = await rpcRequest("tools/call", {
+          name: "analyze_content",
+          arguments: {
+            title: "Demo: Telegram and ChatGPT app opportunity",
+            sourceType: "article",
+            outputStyle: "creator",
+            language: "bilingual",
+            content:
+              "Telegram Mini Apps and ChatGPT Apps let builders distribute software inside apps people already use. The strongest early products are focused tools, not generic assistants. تطبيق الملخص يستطيع قبول تفريغات يوتيوب، الملاحظات الصوتية، الاجتماعات، المقالات، والمحاضرات. It can return a concise brief, key points, action items, and a reusable social post. النسخة الأولى يجب أن تكون محددة، تثبت الطلب، ثم تتوسع إلى Telegram وDiscord وChatGPT.",
+          },
+        });
+
+        toolOutput = response?.structuredContent ?? toolOutput;
+        render();
+      });
+
+      followUpButtonEl.addEventListener("click", async () => {
+        await bridgeReady;
+
+        if (isStandalonePreview) {
+          metaEl.textContent =
+            "This button sends a follow-up message only inside ChatGPT. / هذا الزر يرسل رسالة متابعة فقط داخل ChatGPT.";
+          return;
+        }
+
+        rpcNotify("ui/message", {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Improve this ClipMind brief in both Arabic and English. اجعل الملخص أقصر وأوضح وأكثر فائدة بالعربي والإنجليزي.",
+            },
+          ],
+        });
+      });
+
+      render();
+    </script>
+  </body>
+</html>
