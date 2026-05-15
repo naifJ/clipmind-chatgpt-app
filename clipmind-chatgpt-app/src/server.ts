@@ -15,7 +15,7 @@ import { z } from "zod";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
-const WIDGET_URI = "ui://widget/main-v4.html";
+const WIDGET_URI = "ui://widget/main-v5.html";
 const WIDGET_HTML = readFileSync(
   path.join(ROOT_DIR, "public", "widget.html"),
   "utf8"
