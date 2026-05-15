@@ -20,6 +20,14 @@ const WIDGET_HTML = readFileSync(
   path.join(ROOT_DIR, "public", "widget.html"),
   "utf8"
 );
+const PRIVACY_HTML = readFileSync(
+  path.join(ROOT_DIR, "public", "privacy.html"),
+  "utf8"
+);
+const TERMS_HTML = readFileSync(
+  path.join(ROOT_DIR, "public", "terms.html"),
+  "utf8"
+);
 
 const sourceTypeSchema = z.enum([
   "text",
@@ -365,6 +373,22 @@ createServer(async (req, res) => {
 
   if (req.method === "GET" && url.pathname === "/preview") {
     res.writeHead(200, { "content-type": RESOURCE_MIME_TYPE }).end(WIDGET_HTML);
+    return;
+  }
+
+  if (
+    req.method === "GET" &&
+    (url.pathname === "/privacy" || url.pathname === "/privacy-policy")
+  ) {
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(PRIVACY_HTML);
+    return;
+  }
+
+  if (
+    req.method === "GET" &&
+    (url.pathname === "/terms" || url.pathname === "/terms-of-use")
+  ) {
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(TERMS_HTML);
     return;
   }
 
