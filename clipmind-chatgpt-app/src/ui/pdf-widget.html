@@ -297,6 +297,30 @@
         );
       }
 
+      function readDownloadUrl(result) {
+        if (!result) return undefined;
+        if (typeof result === "string") return result;
+        return result.downloadUrl || result.download_url || result.url;
+      }
+
+      async function withFreshDownloadUrl(file) {
+        if (file.download_url || !file.file_id || !window.openai?.getFileDownloadUrl) {
+          return file;
+        }
+
+        const result = await window.openai.getFileDownloadUrl({ fileId: file.file_id });
+        return { ...file, download_url: readDownloadUrl(result) };
+      }
+
+      function toolFileReference(file) {
+        return {
+          file_id: file.file_id || file.fileId,
+          download_url: file.download_url,
+          file_name: file.file_name || file.fileName || file.name || "document.pdf",
+          mime_type: file.mime_type || file.mimeType || file.type || "application/pdf",
+        };
+      }
+
       async function uploadFiles(files) {
         localFiles = [...files];
         uploadedFiles = [];
@@ -321,10 +345,18 @@
         try {
           for (const file of files) {
             const uploaded = await window.openai.uploadFile(file, { library: false });
+            const fileId = uploaded.fileId || uploaded.file_id;
+            const downloadResult = window.openai.getFileDownloadUrl
+              ? await window.openai.getFileDownloadUrl({ fileId })
+              : undefined;
             uploadedFiles.push({
-              fileId: uploaded.fileId,
+              fileId,
+              file_id: fileId,
+              download_url: readDownloadUrl(downloadResult),
               fileName: file.name,
+              file_name: file.name,
               mimeType: file.type || "application/pdf",
+              mime_type: file.type || "application/pdf",
               size: file.size,
             });
           }
@@ -455,14 +487,34 @@
           return;
         }
 
+        if (window.openai?.callTool && uploadedFiles.length) {
+          try {
+            setStatus("processing", "جاري تجهيز الملف داخل الأداة...");
+            const firstFile = await withFreshDownloadUrl(uploadedFiles[0]);
+            if (!firstFile.download_url) {
+              throw new Error("missing_download_url");
+            }
+
+            const result = await window.openai.callTool("upload_pdf", {
+              file: toolFileReference(firstFile),
+            });
+            renderResult(result?.structuredContent || result);
+            setStatus("completed", "تم إدخال الملف في الأداة. اكتب الآن العملية المطلوبة.");
+            return;
+          } catch {
+            setStatus("error", "تعذر تمرير الملف للأداة تلقائياً. جرّب إرفاقه في رسالة ChatGPT مباشرة.");
+            return;
+          }
+        }
+
         const fileText = uploadedFiles.length
-          ? uploadedFiles.map((file) => `- ${file.fileName} (${file.fileId})`).join("\n")
+          ? JSON.stringify(uploadedFiles.map((file) => toolFileReference(file)), null, 2)
           : "لم يتم رفع ملفات من الواجهة. استخدم الملفات المرفقة في المحادثة إن وجدت.";
 
         if (window.openai?.sendFollowUpMessage) {
           await window.openai.sendFollowUpMessage({
             prompt:
-              "ابدأ معالجة ملفات PDF حسب طلبي السابق. لا تخمن العملية، وإذا كان طلبي ناقصاً اسألني عن المعلومة الناقصة فقط.\n\nالملفات:\n" +
+              "ابدأ معالجة ملفات PDF حسب طلبي السابق. استخدم مراجع الملفات التالية كما هي. لا تخمن العملية، وإذا كان طلبي ناقصاً اسألني عن المعلومة الناقصة فقط.\n\nالملفات:\n" +
               fileText,
           });
         } else {

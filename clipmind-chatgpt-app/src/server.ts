@@ -146,6 +146,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "رفع ملف PDF",
         "openai/toolInvocation/invoked": "تم تجهيز ملف PDF",
@@ -171,6 +172,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false, idempotentHint: true },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "تحليل ملف PDF",
         "openai/toolInvocation/invoked": "اكتمل تحليل ملف PDF",
@@ -209,6 +211,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["files"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "دمج ملفات PDF",
         "openai/toolInvocation/invoked": "اكتمل دمج ملفات PDF",
@@ -252,6 +255,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "تقسيم ملف PDF",
         "openai/toolInvocation/invoked": "اكتمل تقسيم ملف PDF",
@@ -291,6 +295,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "استخراج بيانات الفاتورة",
         "openai/toolInvocation/invoked": "اكتمل استخراج بيانات الفاتورة",
@@ -330,6 +335,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "إعادة ترتيب الصفحات",
         "openai/toolInvocation/invoked": "اكتملت إعادة ترتيب الصفحات",
@@ -357,6 +363,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "تدوير الصفحات",
         "openai/toolInvocation/invoked": "اكتمل تدوير الصفحات",
@@ -383,6 +390,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "حذف الصفحات",
         "openai/toolInvocation/invoked": "اكتمل حذف الصفحات",
@@ -409,6 +417,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "ضغط ملف PDF",
         "openai/toolInvocation/invoked": "اكتمل ضغط ملف PDF",
@@ -438,6 +447,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "إضافة علامة مائية",
         "openai/toolInvocation/invoked": "اكتملت إضافة العلامة المائية",
@@ -468,6 +478,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file", "signature_image"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "إضافة التوقيع",
         "openai/toolInvocation/invoked": "اكتملت إضافة التوقيع",
@@ -494,6 +505,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "تعبئة نموذج PDF",
         "openai/toolInvocation/invoked": "اكتملت تعبئة نموذج PDF",
@@ -520,6 +532,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "تشغيل OCR",
         "openai/toolInvocation/invoked": "اكتمل OCR",
@@ -542,6 +555,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false, idempotentHint: true },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "استخراج النص",
         "openai/toolInvocation/invoked": "اكتمل استخراج النص",
@@ -564,6 +578,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "استخراج الصور",
         "openai/toolInvocation/invoked": "اكتمل استخراج الصور",
@@ -586,6 +601,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "تحويل PDF إلى صور",
         "openai/toolInvocation/invoked": "اكتمل تحويل PDF إلى صور",
@@ -611,6 +627,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["left_file", "right_file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "مقارنة ملفات PDF",
         "openai/toolInvocation/invoked": "اكتملت مقارنة ملفات PDF",
@@ -636,6 +653,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["file"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "تجهيز التصدير",
         "openai/toolInvocation/invoked": "اكتمل التصدير",
@@ -669,6 +687,7 @@ function createAppServer(publicBaseUrl: string): McpServer {
         annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
         _meta: {
           ui: { resourceUri: WIDGET_URI },
+          "openai/fileParams": ["file"],
           "openai/outputTemplate": WIDGET_URI,
           "openai/toolInvocation/invoking": "فحص توفر الميزة",
           "openai/toolInvocation/invoked": "الميزة ضمن الخطة القادمة",
