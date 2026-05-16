@@ -18,7 +18,7 @@
       body {
         margin: 0;
         min-height: 100vh;
-        background: #f6f8fb;
+        background: #eef2f7;
       }
 
       button,
@@ -30,20 +30,18 @@
       .app {
         min-height: 100vh;
         display: grid;
-        grid-template-rows: auto auto 1fr auto;
-        gap: 10px;
-        padding: 12px;
+        grid-template-rows: auto auto auto 1fr auto;
+        gap: 0;
+        padding: 0;
       }
 
       .topbar,
       .uploadbar,
       .toolbar,
+      .optionbar,
       .status,
       .panel,
-      .preview,
-      .inspector {
-        border: 1px solid #dbe3ee;
-        border-radius: 8px;
+      .preview {
         background: #fff;
       }
 
@@ -52,7 +50,33 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        padding: 12px 14px;
+        padding: 10px 18px;
+        border-bottom: 1px solid #e5ebf3;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .mark {
+        width: 34px;
+        height: 34px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 8px;
+        color: #fff;
+        background: #f04444;
+        font-size: 25px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
       h1 {
@@ -72,19 +96,23 @@
       }
 
       .uploadbar {
-        display: grid;
-        grid-template-columns: minmax(220px, 1fr) auto auto;
-        gap: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
         align-items: center;
-        padding: 10px;
+        padding: 8px 18px;
+        border-bottom: 1px solid #e5ebf3;
       }
 
       .drop {
-        display: grid;
-        gap: 4px;
-        min-height: 72px;
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 260px;
         align-content: center;
-        padding: 12px;
+        padding: 8px 10px;
         border: 1px dashed #94a3b8;
         border-radius: 8px;
         background: #fbfdff;
@@ -101,10 +129,12 @@
       }
 
       .toolbar {
-        display: grid;
-        grid-template-columns: repeat(9, minmax(84px, 1fr));
+        display: flex;
+        align-items: stretch;
+        overflow-x: auto;
         gap: 8px;
-        padding: 10px;
+        padding: 8px 18px;
+        border-bottom: 1px solid #e5ebf3;
       }
 
       button,
@@ -126,9 +156,39 @@
       }
 
       button.secondary {
-        border-color: #dbe3ee;
+        border-color: transparent;
         color: #172033;
         background: #fff;
+      }
+
+      .toolbar button.secondary {
+        min-width: 74px;
+        min-height: 54px;
+        flex-direction: column;
+        color: #334155;
+        font-size: 12px;
+      }
+
+      .toolbar button.secondary:hover,
+      .toolbar button.secondary.active-tool {
+        border-color: #f04444;
+        color: #172033;
+        background: #fff4f4;
+      }
+
+      .ico {
+        display: block;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .optionbar {
+        display: grid;
+        grid-template-columns: minmax(160px, 1fr) 180px minmax(180px, 260px) auto minmax(180px, 1fr);
+        gap: 8px;
+        align-items: center;
+        padding: 8px 18px;
+        border-bottom: 1px solid #e5ebf3;
       }
 
       button:disabled {
@@ -139,33 +199,30 @@
       .workspace {
         min-height: 0;
         display: grid;
-        grid-template-columns: 168px minmax(0, 1fr) 290px;
-        gap: 10px;
+        grid-template-columns: 176px minmax(0, 1fr);
+        gap: 0;
       }
 
       .panel,
-      .preview,
-      .inspector {
+      .preview {
         min-height: 0;
         overflow: hidden;
       }
 
-      .panel,
-      .inspector {
+      .panel {
         display: grid;
         grid-template-rows: auto 1fr;
+        border-inline-end: 1px solid #dbe3ee;
       }
 
-      .panel h2,
-      .inspector h2 {
+      .panel h2 {
         margin: 0;
         padding: 10px 12px;
         border-bottom: 1px solid #e2e8f0;
         font-size: 14px;
       }
 
-      .thumbs,
-      .inspector-body {
+      .thumbs {
         overflow: auto;
         padding: 10px;
       }
@@ -206,20 +263,39 @@
       }
 
       .canvas {
-        min-height: 420px;
+        position: relative;
+        min-height: 620px;
         display: grid;
         place-items: center;
-        overflow: hidden;
+        overflow: auto;
         background: #eef2f7;
+        padding: 22px;
       }
 
       iframe,
       .page-image {
-        width: 100%;
-        height: 100%;
+        width: min(100%, 1120px);
+        height: min(72vh, 760px);
         border: 0;
         object-fit: contain;
         background: #fff;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+      }
+
+      .pagebar {
+        position: absolute;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        color: #fff;
+        background: rgba(15, 23, 42, 0.76);
+        font-size: 13px;
+        backdrop-filter: blur(5px);
       }
 
       .empty {
@@ -230,7 +306,7 @@
 
       .files,
       .downloads {
-        display: grid;
+        display: flex;
         gap: 8px;
         margin: 0;
         padding: 0;
@@ -239,7 +315,9 @@
 
       .files li,
       .metric {
-        display: grid;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         gap: 3px;
         padding: 9px;
         border: 1px solid #e2e8f0;
@@ -251,7 +329,7 @@
       label {
         display: grid;
         gap: 6px;
-        margin: 0 0 10px;
+        margin: 0;
         color: #334155;
         font-size: 13px;
         font-weight: 800;
@@ -274,6 +352,7 @@
         justify-content: space-between;
         gap: 10px;
         padding: 10px 12px;
+        border-top: 1px solid #e5ebf3;
         color: #334155;
         font-weight: 800;
       }
@@ -315,8 +394,8 @@
       }
 
       @media (max-width: 900px) {
-        .toolbar {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+        .optionbar {
+          grid-template-columns: 1fr;
         }
 
         .workspace {
@@ -339,10 +418,6 @@
       }
 
       @media (max-width: 560px) {
-        .app {
-          padding: 8px;
-        }
-
         .topbar,
         .uploadbar,
         .status {
@@ -352,7 +427,7 @@
         }
 
         .toolbar {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          padding: 8px;
         }
       }
     </style>
@@ -360,14 +435,21 @@
   <body>
     <main class="app">
       <header class="topbar">
-        <div>
-          <h1 id="app-title">PDF Pro Editor</h1>
-          <p id="subtitle">Edit, convert, OCR, and repair PDFs directly inside ChatGPT.</p>
+        <div class="brand">
+          <span class="mark">+</span>
+          <div>
+            <h1 id="app-title">PDF Pro Editor</h1>
+            <p id="subtitle">Edit, convert, OCR, and repair PDFs directly inside ChatGPT.</p>
+          </div>
         </div>
-        <select id="language-select" class="language" aria-label="Language">
-          <option value="ar">العربية</option>
-          <option value="en">English</option>
-        </select>
+        <div class="top-actions">
+          <select id="language-select" class="language" aria-label="Language">
+            <option value="ar">العربية</option>
+            <option value="en">English</option>
+          </select>
+          <button id="select-chatgpt-file" type="button" class="secondary">اختيار من ChatGPT</button>
+          <button id="load-button" type="button">فتح PDF</button>
+        </div>
       </header>
 
       <section class="uploadbar">
@@ -376,20 +458,48 @@
           <span id="drop-note">أو اختر ملفات من جهازك لبدء التحرير داخل ChatGPT.</span>
           <input id="file-input" type="file" accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg" multiple />
         </label>
-        <button id="select-chatgpt-file" type="button" class="secondary">اختيار من ChatGPT</button>
-        <button id="load-button" type="button">إدخال الملف</button>
       </section>
 
       <section class="toolbar" aria-label="PDF editor tools">
-        <button data-tool="merge_pdfs" type="button" class="secondary">دمج</button>
-        <button data-tool="split_pdf" type="button" class="secondary">تقسيم</button>
-        <button data-tool="compress_pdf" type="button" class="secondary">ضغط</button>
-        <button data-tool="add_watermark" type="button" class="secondary">علامة مائية</button>
-        <button data-tool="rotate_pages" type="button" class="secondary">تدوير</button>
-        <button data-tool="delete_pages" type="button" class="secondary">حذف صفحات</button>
-        <button data-tool="ocr_pdf" type="button" class="secondary">OCR</button>
-        <button data-tool="extract_text" type="button" class="secondary">استخراج نص</button>
-        <button data-tool="export_pdf" type="button">تصدير</button>
+        <button data-tool="add_watermark" type="button" class="secondary"><span class="ico">T</span>نص</button>
+        <button data-tool="add_signature" type="button" class="secondary"><span class="ico">✍</span>توقيع</button>
+        <button data-tool="rotate_pages" type="button" class="secondary"><span class="ico">↻</span>تدوير</button>
+        <button data-tool="delete_pages" type="button" class="secondary"><span class="ico">⌫</span>حذف</button>
+        <button data-tool="split_pdf" type="button" class="secondary"><span class="ico">⇄</span>تقسيم</button>
+        <button data-tool="merge_pdfs" type="button" class="secondary"><span class="ico">⧉</span>دمج</button>
+        <button data-tool="compress_pdf" type="button" class="secondary"><span class="ico">⇣</span>ضغط</button>
+        <button data-tool="ocr_pdf" type="button" class="secondary"><span class="ico">OCR</span>قراءة</button>
+        <button data-tool="extract_text" type="button" class="secondary"><span class="ico">Aa</span>نص</button>
+        <button data-tool="export_pdf" type="button"><span class="ico">↓</span>تصدير</button>
+      </section>
+
+      <section class="optionbar">
+        <ul class="files" id="file-list" aria-label="Uploaded files"></ul>
+        <label>
+          <span id="tool-label">الأداة</span>
+          <select id="operation-select">
+            <option value="analyze_pdf">تحليل الملف</option>
+            <option value="merge_pdfs">دمج الملفات</option>
+            <option value="split_pdf">تقسيم PDF</option>
+            <option value="reorder_pages">إعادة ترتيب الصفحات</option>
+            <option value="rotate_pages">تدوير الصفحات 90°</option>
+            <option value="delete_pages">حذف صفحات</option>
+            <option value="compress_pdf">ضغط PDF</option>
+            <option value="add_watermark">إضافة نص/علامة</option>
+            <option value="ocr_pdf">OCR عربي/إنجليزي</option>
+            <option value="extract_text">استخراج النص</option>
+            <option value="extract_images">استخراج الصور</option>
+            <option value="convert_pdf_to_images">PDF إلى صور</option>
+            <option value="images_to_pdf">صور إلى PDF</option>
+            <option value="export_pdf">تصدير PDF</option>
+          </select>
+        </label>
+        <label>
+          <span id="param-label">القيمة</span>
+          <input id="param-input" type="text" placeholder="نص أو صفحات" />
+        </label>
+        <button id="apply-button" type="button">تطبيق</button>
+        <div class="downloads" id="downloads"></div>
       </section>
 
       <section class="workspace">
@@ -407,47 +517,13 @@
           </div>
           <div class="canvas" id="canvas">
             <div class="empty" id="empty-preview">ارفع ملف PDF لعرضه وتعديله هنا داخل ChatGPT.</div>
+            <div class="pagebar">Page: 1/1 · 100% · ⊕ ⊖</div>
           </div>
         </section>
-
-        <aside class="inspector">
-          <h2 id="inspector-title">إعدادات العملية</h2>
-          <div class="inspector-body">
-            <ul class="files" id="file-list" aria-label="Uploaded files"></ul>
-
-            <label>
-              <span id="tool-label">الأداة</span>
-              <select id="operation-select">
-                <option value="analyze_pdf">تحليل الملف</option>
-                <option value="merge_pdfs">دمج الملفات</option>
-                <option value="split_pdf">تقسيم PDF</option>
-                <option value="reorder_pages">إعادة ترتيب الصفحات</option>
-                <option value="rotate_pages">تدوير الصفحات 90°</option>
-                <option value="delete_pages">حذف صفحات</option>
-                <option value="compress_pdf">ضغط PDF</option>
-                <option value="add_watermark">إضافة علامة مائية</option>
-                <option value="ocr_pdf">OCR عربي/إنجليزي</option>
-                <option value="extract_text">استخراج النص</option>
-                <option value="extract_images">استخراج الصور</option>
-                <option value="convert_pdf_to_images">PDF إلى صور</option>
-                <option value="images_to_pdf">صور إلى PDF</option>
-                <option value="export_pdf">تصدير PDF</option>
-              </select>
-            </label>
-
-            <label>
-              <span id="param-label">القيمة</span>
-              <input id="param-input" type="text" placeholder="نص العلامة أو الصفحات حسب العملية" />
-            </label>
-
-            <button id="apply-button" type="button">طبّق التعديل</button>
-
-            <div class="metric" id="summary">بانتظار ملف PDF.</div>
-            <pre id="json-result" hidden></pre>
-            <div class="downloads" id="downloads"></div>
-          </div>
-        </aside>
       </section>
+
+      <div class="metric" id="summary">بانتظار ملف PDF.</div>
+      <pre id="json-result" hidden></pre>
 
       <section class="status" id="status" data-state="ready" aria-live="polite">
         <span><span class="dot"></span><span id="status-text">جاهز</span></span>
@@ -594,12 +670,21 @@
           empty.className = "empty";
           empty.textContent = lang === "ar" ? "ارفع ملف PDF لعرضه وتعديله هنا داخل ChatGPT." : "Upload a PDF to preview and edit it here.";
           els.canvas.append(empty);
+          appendPagebar();
           return;
         }
         const frame = document.createElement("iframe");
         frame.src = url;
         frame.title = "PDF preview";
         els.canvas.append(frame);
+        appendPagebar();
+      }
+
+      function appendPagebar() {
+        const bar = document.createElement("div");
+        bar.className = "pagebar";
+        bar.textContent = "Page: 1/1 · 100% · + -";
+        els.canvas.append(bar);
       }
 
       async function setUploadedFiles(files) {
@@ -638,6 +723,7 @@
             img.src = file.download_url;
             img.alt = `Page ${index + 1}`;
             els.canvas.append(img);
+            appendPagebar();
           });
           els.thumbs.append(button);
         });
