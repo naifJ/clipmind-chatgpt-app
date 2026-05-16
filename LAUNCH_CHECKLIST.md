@@ -1,22 +1,38 @@
-# Smart PDF Assistant Launch Checklist
+# PDF Pro Editor Launch Checklist
 
 ## App Archetype
 
 `vanilla-widget`
 
-The app uses one TypeScript MCP server and one minimal vanilla HTML widget.
+The app uses one TypeScript MCP server and one iframe widget. A React component source is included at `src/ui/PdfProEditor.tsx`.
 
 ## MVP Tools
 
-- `merge_pdfs`: merge two or more PDF files.
-- `split_pdf`: split a PDF by page ranges.
-- `extract_invoice_data`: extract invoice fields into JSON with confidence scores.
+- `upload_pdf`
+- `analyze_pdf`
+- `merge_pdfs`
+- `split_pdf`
+- `reorder_pages`
+- `rotate_pages`
+- `delete_pages`
+- `compress_pdf`
+- `add_watermark`
+- `add_signature`
+- `fill_pdf_form`
+- `ocr_pdf`
+- `extract_text`
+- `extract_images`
+- `convert_pdf_to_images`
+- `compare_pdfs`
+- `export_pdf`
 
 ## TODO Tools
 
-- `compress_pdf`
-- `ocr_pdf`
-- `analyze_contract`
+- high-fidelity direct PDF text editing
+- export to Word/PowerPoint with perfect formatting
+- corrupted PDF repair
+- advanced visual diff
+- contract analysis
 
 ## Render Settings
 
@@ -44,13 +60,13 @@ ALLOW_EXTERNAL_OCR=false
 Name:
 
 ```txt
-Smart PDF Assistant
+PDF Pro Editor
 ```
 
 Description:
 
 ```txt
-Smart PDF Assistant merges, splits, and extracts invoice data from PDF files inside ChatGPT with a minimal Arabic-first interface.
+PDF Pro Editor lets users edit, convert, OCR, and export PDFs directly inside ChatGPT.
 ```
 
 MCP URL:

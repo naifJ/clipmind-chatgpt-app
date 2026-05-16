@@ -1,4 +1,4 @@
-# Smart PDF Assistant MCP Examples
+# PDF Pro Editor MCP Examples
 
 These examples assume the server is running at `http://localhost:8787`.
 

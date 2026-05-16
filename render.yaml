@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: smart-pdf-assistant
+    name: pdf-pro-editor
     runtime: node
     rootDir: clipmind-chatgpt-app
     plan: free

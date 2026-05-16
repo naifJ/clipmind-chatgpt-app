@@ -1,0 +1,15 @@
+services:
+  pdf-pro-editor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PUBLIC_BASE_URL: http://localhost:8787
+      MAX_FILE_SIZE_MB: "20"
+      MAX_FILES_PER_REQUEST: "10"
+      OUTPUT_TTL_MINUTES: "30"
+      RATE_LIMIT_PER_MINUTE: "40"
+      ALLOW_EXTERNAL_OCR: "false"
+    ports:
+      - "8787:8787"

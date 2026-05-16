@@ -1,13 +1,18 @@
-# Smart PDF Assistant
+# PDF Pro Editor
 
-Smart PDF Assistant is a ChatGPT Apps SDK + MCP server for simple PDF workflows inside ChatGPT.
+PDF Pro Editor is a ChatGPT Apps SDK + MCP server for PDF editing, conversion, OCR, and export workflows inside ChatGPT.
 
 Current MVP:
 
-- Merge PDFs
-- Split PDFs by page ranges
-- Extract invoice data to JSON with confidence scores
-- Minimal Arabic-first iframe widget for upload, status, result, and download
+- Upload and analyze PDFs
+- Merge, split, reorder, rotate, and delete pages
+- Add text watermarks and signature images
+- Fill PDF forms
+- Extract text/images and convert pages to images
+- Tesseract OCR text output
+- Compress/export PDFs
+- Compare PDFs with a text diff MVP
+- Minimal Arabic/English iframe widget for upload, status, result, and download
 
 Project folder:
 

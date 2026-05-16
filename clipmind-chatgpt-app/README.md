@@ -1,18 +1,53 @@
-# Smart PDF Assistant
+# PDF Pro Editor
 
-Smart PDF Assistant is a minimal ChatGPT Apps SDK application for PDF workflows inside ChatGPT. It exposes MCP tools for PDF operations and a simple RTL iframe widget for upload/status/result/download.
+PDF Pro Editor is a production-style ChatGPT Apps SDK application for PDF workflows inside ChatGPT.
 
-## MVP Tools
+Main value proposition:
 
-- `merge_pdfs`: merge two or more PDFs into one PDF.
-- `split_pdf`: split one PDF using page ranges such as `1-3,4-8`.
-- `extract_invoice_data`: extract invoice fields as JSON with confidence scores.
+```text
+Edit, convert, OCR, and repair PDFs directly inside ChatGPT.
+```
 
-## TODO
+The app uses:
 
-- `compress_pdf`: PDF compression with Ghostscript or another replaceable service.
-- `ocr_pdf`: OCR for scanned PDFs/images with Tesseract.js or a configurable OCR service.
-- `analyze_contract`: Arabic contract summary, key terms, risky clauses, dates, parties, and obligations.
+- TypeScript + Node.js
+- Express-compatible MCP HTTP/SSE server
+- OpenAI Apps SDK / MCP tool architecture
+- A minimal iframe widget for upload, status, result, and download
+- React component source in `src/ui/PdfProEditor.tsx`
+- Local temporary file storage with upgrade path to S3/R2
+- Docker and docker-compose support
+
+## Implemented Tools
+
+- `upload_pdf`
+- `analyze_pdf`
+- `merge_pdfs`
+- `split_pdf`
+- `reorder_pages`
+- `rotate_pages`
+- `delete_pages`
+- `compress_pdf` basic safe rewrite, Ghostscript-quality compression is TODO
+- `add_watermark` text watermark
+- `add_signature` PNG/JPG signature image placement
+- `fill_pdf_form` text fields and checkboxes
+- `ocr_pdf` Tesseract text output for limited pages
+- `extract_text`
+- `extract_images`
+- `convert_pdf_to_images`
+- `compare_pdfs` text diff MVP
+- `export_pdf`
+- `extract_invoice_data` retained from prior PDF workflow
+
+## Commercial Placeholders
+
+These are registered as explicit not-enabled tools so ChatGPT can explain availability without pretending they work:
+
+- `edit_pdf_text`
+- `export_to_word`
+- `export_to_powerpoint`
+- `repair_pdf`
+- `advanced_visual_diff`
 
 ## Local Setup
 
@@ -28,13 +63,19 @@ npm run build
 npm start
 ```
 
-The MCP endpoint runs at:
+Run tests:
+
+```bash
+npm test
+```
+
+MCP endpoint:
 
 ```text
 http://localhost:8787/mcp
 ```
 
-Preview the iframe widget:
+Widget preview:
 
 ```text
 http://localhost:8787/preview
@@ -43,14 +84,14 @@ http://localhost:8787/preview
 ## ChatGPT Developer Mode
 
 1. Run the server locally.
-2. Expose it with HTTPS, for example:
+2. Expose it with HTTPS:
 
 ```bash
 ngrok http 8787
 ```
 
-3. In ChatGPT, enable Developer Mode from Apps & Connectors advanced settings.
-4. Create a new app and use:
+3. In ChatGPT, enable Developer Mode under Apps & Connectors advanced settings.
+4. Create a new app with:
 
 ```text
 https://YOUR-TUNNEL.ngrok-free.app/mcp
@@ -58,9 +99,15 @@ https://YOUR-TUNNEL.ngrok-free.app/mcp
 
 5. Authentication: `No authentication`.
 
+## Docker
+
+```bash
+docker compose up --build
+```
+
 ## Render Deployment
 
-This project is ready for Render through the repository `Dockerfile`.
+The repo includes a root `Dockerfile`.
 
 Recommended environment variables:
 
@@ -75,26 +122,37 @@ ALLOW_EXTERNAL_OCR=false
 
 ## File Input Shape
 
-Tools accept ChatGPT file references in this shape:
+Tools accept ChatGPT file references:
 
 ```json
 {
   "file_id": "optional-id",
   "download_url": "https://temporary-download-url",
-  "file_name": "invoice.pdf",
+  "file_name": "document.pdf",
   "mime_type": "application/pdf"
 }
 ```
 
-## Example Tool Calls
-
-See [tests/mcp-examples.md](../tests/mcp-examples.md).
-
 ## Security
 
-- Files are fetched from app-authorized temporary URLs.
-- Only PDF MIME/type/magic bytes are accepted for PDF tools.
-- Executable uploads are not accepted.
-- Temporary output files expire automatically.
-- Logs avoid file content and only log operational errors.
-- The current MVP does not send files to external OCR or AI services.
+- Validates MIME and PDF magic bytes.
+- Rejects malformed/non-PDF inputs for PDF tools.
+- Sanitizes output filenames.
+- Prevents path traversal through generated file IDs.
+- Limits file size and request counts.
+- Deletes temporary output files after TTL.
+- Adds rate limiting on app routes.
+- Includes plan/credit hooks in `src/lib/usageLimits.ts` for future pricing.
+- Logs operational errors without file content.
+- External OCR/AI providers are not used unless explicitly configured later.
+
+## TODO
+
+- Direct PDF text editing with layout preservation.
+- PDF to Word/PowerPoint with high-fidelity formatting.
+- Ghostscript-backed compression.
+- Searchable PDF output after OCR.
+- Corrupted PDF repair.
+- Advanced visual diff.
+- Image-to-PDF tool.
+- Usage credits, plan limits, paid plan hooks, team billing.
