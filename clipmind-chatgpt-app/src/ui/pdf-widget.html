@@ -73,7 +73,7 @@
 
       .uploadbar {
         display: grid;
-        grid-template-columns: minmax(220px, 1fr) auto;
+        grid-template-columns: minmax(220px, 1fr) auto auto;
         gap: 10px;
         align-items: center;
         padding: 10px;
@@ -376,6 +376,7 @@
           <span id="drop-note">أو اختر ملفات من جهازك لبدء التحرير داخل ChatGPT.</span>
           <input id="file-input" type="file" accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg" multiple />
         </label>
+        <button id="select-chatgpt-file" type="button" class="secondary">اختيار من ChatGPT</button>
         <button id="load-button" type="button">إدخال الملف</button>
       </section>
 
@@ -463,6 +464,7 @@
         dropTitle: document.querySelector("#drop-title"),
         dropNote: document.querySelector("#drop-note"),
         fileInput: document.querySelector("#file-input"),
+        selectChatGptFile: document.querySelector("#select-chatgpt-file"),
         loadButton: document.querySelector("#load-button"),
         fileList: document.querySelector("#file-list"),
         thumbs: document.querySelector("#thumbs"),
@@ -600,6 +602,20 @@
         els.canvas.append(frame);
       }
 
+      async function setUploadedFiles(files) {
+        uploadedFiles = files;
+        localFiles = [];
+        currentFile = uploadedFiles.find((file) => file.mime_type === "application/pdf") ?? uploadedFiles[0] ?? null;
+        renderFiles();
+
+        if (currentFile?.download_url && currentFile.mime_type === "application/pdf") {
+          renderMainPreview(currentFile.download_url);
+          await refreshPreview();
+        } else {
+          renderMainPreview("");
+        }
+      }
+
       function renderThumbnails(files) {
         previewImages = files ?? [];
         els.thumbs.replaceChildren();
@@ -670,11 +686,46 @@
             });
           }
           currentFile = uploadedFiles.find((file) => file.mime_type === "application/pdf") ?? uploadedFiles[0];
-          if (currentFile?.download_url && currentFile.mime_type === "application/pdf") renderMainPreview(currentFile.download_url);
+          if (currentFile?.download_url && currentFile.mime_type === "application/pdf") {
+            renderMainPreview(currentFile.download_url);
+            await refreshPreview();
+          }
           renderFiles();
           setStatus("ready", lang === "ar" ? "تم الرفع. اختر أداة وطبّق التعديل." : "Uploaded. Choose a tool and apply an edit.");
         } catch {
           setStatus("error", lang === "ar" ? "تعذر رفع الملفات." : "Could not upload files.");
+        }
+      }
+
+      async function selectChatGptFiles() {
+        if (!window.openai?.selectFiles) {
+          setStatus("error", lang === "ar" ? "اختيار ملفات ChatGPT غير متاح هنا. ارفع الملف من منطقة السحب." : "ChatGPT file picker is unavailable here. Use drag and drop.");
+          return;
+        }
+
+        try {
+          setStatus("processing", lang === "ar" ? "جاري فتح ملفات ChatGPT..." : "Opening ChatGPT files...");
+          const selected = await window.openai.selectFiles();
+          const files = [];
+          for (const file of selected ?? []) {
+            const fileId = file.fileId || file.file_id;
+            const downloadResult = window.openai.getFileDownloadUrl
+              ? await window.openai.getFileDownloadUrl({ fileId })
+              : undefined;
+            files.push({
+              fileId,
+              file_id: fileId,
+              download_url: readDownloadUrl(downloadResult),
+              fileName: file.fileName || file.file_name,
+              file_name: file.fileName || file.file_name,
+              mimeType: file.mimeType || file.mime_type || "application/pdf",
+              mime_type: file.mimeType || file.mime_type || "application/pdf",
+            });
+          }
+          await setUploadedFiles(files);
+          setStatus("ready", lang === "ar" ? "تم عرض الملف داخل المحرر." : "File is open in the editor.");
+        } catch {
+          setStatus("error", lang === "ar" ? "تعذر اختيار الملف من ChatGPT." : "Could not select a ChatGPT file.");
         }
       }
 
@@ -795,6 +846,7 @@
       }
 
       els.fileInput.addEventListener("change", () => uploadFiles(els.fileInput.files ?? []));
+      els.selectChatGptFile.addEventListener("click", selectChatGptFiles);
       els.loadButton.addEventListener("click", () => callTool("upload_pdf"));
       els.apply.addEventListener("click", () => callTool(els.operation.value));
       els.refreshPreview.addEventListener("click", refreshPreview);
