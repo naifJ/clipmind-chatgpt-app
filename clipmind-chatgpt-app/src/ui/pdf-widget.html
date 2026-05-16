@@ -835,6 +835,15 @@
           if (!images.length) throw new Error("need_images");
           return { images };
         }
+        if (operation === "add_signature") {
+          const signature = uploadedFiles.find((item) => item.mime_type?.startsWith("image/"));
+          if (!signature) throw new Error("need_signature");
+          return {
+            file,
+            signature_image: toolFileReference(signature),
+            page: value ? Number(value) : 1,
+          };
+        }
         if (operation === "add_watermark") {
           if (!value) throw new Error("missing_param");
           return { file, text: value };
@@ -926,6 +935,7 @@
           delete_pages: "2,4-6",
           rotate_pages: "1-2",
           add_watermark: "Confidential",
+          add_signature: "1",
           compress_pdf: "2",
         };
         els.param.placeholder = placeholders[els.operation.value] || (lang === "ar" ? "اختياري" : "Optional");
