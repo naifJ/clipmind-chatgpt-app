@@ -1,50 +1,30 @@
-# AI Summarizer
+# Smart PDF Assistant
 
-AI Summarizer is a bilingual Arabic-English ChatGPT App that turns notes, transcripts, lectures, meetings, and articles into structured summaries, key points, action items, and reusable posts.
+Smart PDF Assistant is a ChatGPT Apps SDK + MCP server for simple PDF workflows inside ChatGPT.
 
-The app is built as:
+Current MVP:
 
-- Node.js MCP server
-- vanilla HTML ChatGPT widget
-- Render-ready web service
+- Merge PDFs
+- Split PDFs by page ranges
+- Extract invoice data to JSON with confidence scores
+- Minimal Arabic-first iframe widget for upload, status, result, and download
 
-## Project
+Project folder:
 
-```txt
+```text
 clipmind-chatgpt-app/
 ```
 
-## Local Run
+Run locally:
 
 ```bash
 cd clipmind-chatgpt-app
 npm install
-npm run build
-npm start
+npm run dev
 ```
 
-Local endpoints:
+MCP URL:
 
-```txt
-http://localhost:8787/
+```text
 http://localhost:8787/mcp
-http://localhost:8787/sse
-http://localhost:8787/preview
 ```
-
-## Render Deploy
-
-This repository includes `render.yaml`.
-
-Recommended production endpoint for ChatGPT:
-
-```txt
-https://YOUR-RENDER-SERVICE.onrender.com/mcp
-```
-
-If the ChatGPT app setup screen specifically asks for an SSE endpoint:
-
-```txt
-https://YOUR-RENDER-SERVICE.onrender.com/sse
-```
-

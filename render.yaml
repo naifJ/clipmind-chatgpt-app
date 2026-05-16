@@ -1,13 +1,23 @@
 services:
   - type: web
-    name: clipmind-chatgpt-app
+    name: smart-pdf-assistant
     runtime: node
     rootDir: clipmind-chatgpt-app
     plan: free
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: MAX_FILE_SIZE_MB
+        value: "20"
+      - key: MAX_FILES_PER_REQUEST
+        value: "10"
+      - key: OUTPUT_TTL_MINUTES
+        value: "30"
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "40"
+      - key: ALLOW_EXTERNAL_OCR
+        value: "false"

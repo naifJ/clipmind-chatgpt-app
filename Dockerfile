@@ -11,6 +11,6 @@ WORKDIR /app/clipmind-chatgpt-app
 RUN npm run build
 
 ENV NODE_ENV=production
-EXPOSE 3000
+EXPOSE 8787
 
 CMD ["npm", "start"]

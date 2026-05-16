@@ -1,75 +1,62 @@
-# AI Summarizer Launch Checklist
+# Smart PDF Assistant Launch Checklist
 
 ## App Archetype
 
 `vanilla-widget`
 
-The app uses one MCP server and one vanilla HTML widget. This is the fastest stable shape for the current MVP.
+The app uses one TypeScript MCP server and one minimal vanilla HTML widget.
 
-## Tool Plan
+## MVP Tools
 
-### `analyze_content`
+- `merge_pdfs`: merge two or more PDF files.
+- `split_pdf`: split a PDF by page ranges.
+- `extract_invoice_data`: extract invoice fields into JSON with confidence scores.
 
-Use this when the user wants to turn pasted text, transcript notes, YouTube transcript notes, article notes, podcast notes, meeting notes, or lecture notes into a concise bilingual AI Summarizer brief in Arabic and English.
+## TODO Tools
 
-Inputs:
-
-- `content`
-- `title`
-- `sourceType`: `text`, `youtube`, `article`, `podcast`, `meeting`, `lecture`
-- `outputStyle`: `executive`, `student`, `creator`, `research`
-- `language`: `bilingual`, `english`, `arabic`
-
-Outputs:
-
-- English summary
-- Arabic summary
-- English key points
-- Arabic key points
-- English action items
-- Arabic action items
-- English reusable post
-- Arabic reusable post
-- source stats
+- `compress_pdf`
+- `ocr_pdf`
+- `analyze_contract`
 
 ## Render Settings
 
-Use the included `render.yaml`, or create a Web Service manually:
+The repository includes a root `Dockerfile`. Manual Render settings:
 
 ```txt
-Root Directory: clipmind-chatgpt-app
-Runtime: Node
-Build Command: npm install && npm run build
-Start Command: npm start
+Runtime: Docker
+Plan: Free or paid
 Health Check Path: /
 ```
 
-Environment variables:
+Recommended environment variables:
 
 ```txt
-NODE_ENV=production
+PUBLIC_BASE_URL=https://clipmind-chatgpt-app.onrender.com
+MAX_FILE_SIZE_MB=20
+MAX_FILES_PER_REQUEST=10
+OUTPUT_TTL_MINUTES=30
+RATE_LIMIT_PER_MINUTE=40
+ALLOW_EXTERNAL_OCR=false
 ```
 
-No OpenAI API key is required for the current MVP because ChatGPT supplies the reasoning layer.
-
-## ChatGPT Developer Mode Settings
+## ChatGPT App Settings
 
 Name:
 
 ```txt
-AI Summarizer
+Smart PDF Assistant
 ```
 
 Description:
 
 ```txt
-Summarize text, YouTube transcripts, meeting notes, lectures, and articles in Arabic and English. Get key points, action items, and reusable posts.
+Smart PDF Assistant merges, splits, and extracts invoice data from PDF files inside ChatGPT with a minimal Arabic-first interface.
 ```
 
-MCP URL after Render deploy:
+MCP URL:
 
 ```txt
-https://YOUR-RENDER-SERVICE.onrender.com/mcp
+https://clipmind-chatgpt-app.onrender.com/mcp
 ```
 
 Authentication:
@@ -78,42 +65,14 @@ Authentication:
 No authentication
 ```
 
-## Test Prompts
+Privacy:
 
 ```txt
-Use AI Summarizer to analyze this content in Arabic and English:
-
-Telegram Mini Apps and ChatGPT Apps let builders distribute software inside apps people already use. The best early products are focused tools, not generic assistants.
+https://clipmind-chatgpt-app.onrender.com/privacy
 ```
+
+Terms:
 
 ```txt
-Use AI Summarizer to summarize these meeting notes in executive style in Arabic and English:
-
-We reviewed product launch priorities, agreed to focus on onboarding, and assigned follow-up tasks for analytics, landing page copy, and user interviews.
+https://clipmind-chatgpt-app.onrender.com/terms
 ```
-
-```txt
-Use AI Summarizer to turn this lecture into study notes:
-
-Artificial intelligence systems can classify, summarize, translate, and generate content. Students should compare model outputs, verify facts, and save concise notes for review.
-```
-
-## Submission Gaps Before Public Directory Review
-
-- Stable production domain
-- Privacy policy URL
-- Terms of use URL
-- App icon
-- Screenshots
-- Support contact
-- Submission metadata
-- End-to-end ChatGPT Developer Mode test with hosted Render URL
-
-## Docs Used
-
-- https://developers.openai.com/apps-sdk/quickstart
-- https://developers.openai.com/apps-sdk/build/mcp-server
-- https://developers.openai.com/apps-sdk/build/chatgpt-ui
-- https://developers.openai.com/apps-sdk/deploy/submission
-- https://developers.openai.com/apps-sdk/app-submission-guidelines
-

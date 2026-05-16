@@ -13,254 +13,203 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 
+import { cleanupExpiredFiles, ensureStorage, makePublicBaseUrl, readOutputFile, readOutputFileBytes } from "./lib/fileStorage.js";
+import { startCleanupTimer } from "./lib/cleanup.js";
+import { isRateLimited } from "./lib/rateLimit.js";
+import { fileReferenceSchema, MAX_FILE_SIZE_BYTES, MAX_FILES_PER_REQUEST } from "./lib/validation.js";
+import { extractInvoiceData } from "./tools/extractInvoiceData.js";
+import { mergePdfs } from "./tools/mergePdfs.js";
+import { splitPdf } from "./tools/splitPdf.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
-const WIDGET_URI = "ui://widget/main-v5.html";
-const WIDGET_HTML = readFileSync(
-  path.join(ROOT_DIR, "public", "widget.html"),
-  "utf8"
-);
-const PRIVACY_HTML = readFileSync(
-  path.join(ROOT_DIR, "public", "privacy.html"),
-  "utf8"
-);
-const TERMS_HTML = readFileSync(
-  path.join(ROOT_DIR, "public", "terms.html"),
-  "utf8"
-);
+const WIDGET_URI = "ui://widget/smart-pdf-assistant-v1.html";
+const WIDGET_HTML = readFileSync(path.join(ROOT_DIR, "src", "ui", "pdf-widget.html"), "utf8");
+const PRIVACY_HTML = readFileSync(path.join(ROOT_DIR, "public", "privacy.html"), "utf8");
+const TERMS_HTML = readFileSync(path.join(ROOT_DIR, "public", "terms.html"), "utf8");
 
-const sourceTypeSchema = z.enum([
-  "text",
-  "youtube",
-  "article",
-  "podcast",
-  "meeting",
-  "lecture",
-]);
+const outputFileSchema = z.object({
+  file_id: z.string(),
+  file_name: z.string(),
+  mime_type: z.string(),
+  size_bytes: z.number().int(),
+  download_url: z.string().url(),
+});
 
-const outputStyleSchema = z.enum([
-  "executive",
-  "student",
-  "creator",
-  "research",
-]);
+const baseOperationOutputSchema = {
+  operation: z.string(),
+  status: z.enum(["ready", "processing", "completed", "error"]),
+  summary_ar: z.string(),
+  summary_en: z.string(),
+  files: z.array(outputFileSchema),
+  details: z.record(z.unknown()).optional(),
+};
 
-const languageSchema = z.enum(["bilingual", "english", "arabic"]);
+const confidenceStringSchema = z.object({
+  value: z.string().nullable(),
+  confidence: z.number().min(0).max(1),
+});
 
-const analysisOutputSchema = {
-  title: z.string(),
-  sourceType: sourceTypeSchema,
-  outputStyle: outputStyleSchema,
-  language: languageSchema,
-  summary: z.string(),
-  summaryAr: z.string(),
-  keyPoints: z.array(z.string()),
-  keyPointsAr: z.array(z.string()),
-  actionItems: z.array(z.string()),
-  actionItemsAr: z.array(z.string()),
-  reusablePost: z.string(),
-  reusablePostAr: z.string(),
-  stats: z.object({
-    characters: z.number().int(),
-    words: z.number().int(),
-    estimatedReadingMinutes: z.number().int(),
+const confidenceNumberSchema = z.object({
+  value: z.number().nullable(),
+  confidence: z.number().min(0).max(1),
+});
+
+const invoiceOutputSchema = {
+  ...baseOperationOutputSchema,
+  invoice_data: z.object({
+    vendor_name: confidenceStringSchema,
+    invoice_number: confidenceStringSchema,
+    invoice_date: confidenceStringSchema,
+    total_amount: confidenceNumberSchema,
+    tax_amount: confidenceNumberSchema,
+    currency: confidenceStringSchema,
+    line_items: z.array(
+      z.object({
+        description: z.string().nullable(),
+        quantity: z.number().nullable(),
+        unit_price: z.number().nullable(),
+        amount: z.number().nullable(),
+        confidence: z.number().min(0).max(1),
+      })
+    ),
   }),
 };
 
-type SourceType = z.infer<typeof sourceTypeSchema>;
-type OutputStyle = z.infer<typeof outputStyleSchema>;
-type Language = z.infer<typeof languageSchema>;
+const port = Number(process.env.PORT ?? "8787");
+const MCP_PATH = "/mcp";
+const SSE_PATH = "/sse";
+const MESSAGES_PATH = "/messages";
+const sseSessions = new Map<string, { transport: SSEServerTransport; server: McpServer }>();
 
-function splitSentences(content: string): string[] {
-  return content
-    .replace(/\s+/g, " ")
-    .split(/(?<=[.!?؟])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-}
-
-function wordCount(content: string): number {
-  return content.trim().split(/\s+/).filter(Boolean).length;
-}
-
-function makeTitle(content: string, fallback?: string): string {
-  if (fallback?.trim()) {
-    return fallback.trim().slice(0, 90);
-  }
-
-  const firstLine = content
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .find(Boolean);
-
-  return (firstLine || "AI Summarizer analysis").slice(0, 90);
-}
-
-function createSummary(content: string, style: OutputStyle): string {
-  const sentences = splitSentences(content);
-  const opening = sentences.slice(0, 2).join(" ");
-  const styleLabel = {
-    executive: "Business brief",
-    student: "Study notes",
-    creator: "Creator brief",
-    research: "Research brief",
-  }[style];
-
-  if (!opening) {
-    return `${styleLabel}: Add source text, a transcript, or notes and AI Summarizer will turn it into a concise working brief.`;
-  }
-
-  return `${styleLabel}: ${opening}`;
-}
-
-function createArabicSummary(content: string, style: OutputStyle): string {
-  const sentences = splitSentences(content);
-  const opening = sentences.slice(0, 2).join(" ");
-  const styleLabel = {
-    executive: "ملخص تنفيذي",
-    student: "ملاحظات مذاكرة",
-    creator: "ملخص لصانع محتوى",
-    research: "ملخص بحثي",
-  }[style];
-
-  if (!opening) {
-    return `${styleLabel}: أضف نصًا أو تفريغًا أو ملاحظات وسيحوّلها AI Summarizer إلى ملخص عملي ومنظم.`;
-  }
-
-  return `${styleLabel}: ${opening}`;
-}
-
-function createKeyPoints(content: string): string[] {
-  const sentences = splitSentences(content);
-  const candidates = sentences.length > 0 ? sentences : [content.trim()];
-
-  return candidates
-    .slice(0, 5)
-    .map((sentence) => sentence.replace(/^[\-*]\s*/, "").trim())
-    .filter(Boolean)
-    .map((sentence) => (sentence.length > 160 ? `${sentence.slice(0, 157)}...` : sentence));
-}
-
-function createArabicKeyPoints(keyPoints: string[]): string[] {
-  return keyPoints.map((point) => `نقطة مهمة: ${point}`);
-}
-
-function createActionItems(sourceType: SourceType, style: OutputStyle): string[] {
-  const base = [
-    "Ask ChatGPT to expand the brief into a cleaner final summary.",
-    "Save the key points that matter and remove anything off-topic.",
-  ];
-
-  if (sourceType === "youtube" || sourceType === "podcast") {
-    base.push("Turn the strongest point into a short social post or study note.");
-  }
-
-  if (style === "creator") {
-    base.push("Convert the brief into a hook, outline, and caption.");
-  }
-
-  if (style === "student") {
-    base.push("Ask for quiz questions to test recall.");
-  }
-
-  return base.slice(0, 4);
-}
-
-function createArabicActionItems(sourceType: SourceType, style: OutputStyle): string[] {
-  const base = [
-    "اطلب من ChatGPT توسيع الملخص وتحويله إلى نسخة نهائية أوضح.",
-    "احفظ النقاط المهمة واحذف أي تفاصيل غير مرتبطة بهدفك.",
-  ];
-
-  if (sourceType === "youtube" || sourceType === "podcast") {
-    base.push("حوّل أقوى فكرة إلى منشور قصير أو ملاحظة مذاكرة.");
-  }
-
-  if (style === "creator") {
-    base.push("حوّل الملخص إلى hook وخطوط عريضة وتعليق جاهز للنشر.");
-  }
-
-  if (style === "student") {
-    base.push("اطلب أسئلة اختبار قصيرة للتأكد من الفهم.");
-  }
-
-  return base.slice(0, 4);
-}
-
-function createReusablePost(title: string, keyPoints: string[]): string {
-  const lead = keyPoints[0] || "Here is the core idea worth remembering.";
-  const support = keyPoints[1] || "The source has enough signal to turn into a practical brief.";
-
-  return `${title}\n\n${lead}\n\n${support}\n\nSaved as a clean AI Summarizer summary.`;
-}
-
-function createArabicReusablePost(title: string, keyPoints: string[]): string {
-  const lead = keyPoints[0] || "هذه هي الفكرة الأساسية التي تستحق الحفظ.";
-  const support = keyPoints[1] || "المصدر يحتوي على نقاط كافية لتحويلها إلى ملخص عملي.";
-
-  return `${title}\n\n${lead}\n\n${support}\n\nتم حفظه كملخص منظم من AI Summarizer.`;
-}
-
-function createAppServer(): McpServer {
+function createAppServer(publicBaseUrl: string): McpServer {
   const server = new McpServer({
-    name: "AI Summarizer",
+    name: "Smart PDF Assistant",
     version: "0.1.0",
   });
 
-  registerAppResource(
-    server,
-    "main-widget",
-    WIDGET_URI,
-    {},
-    async () => ({
-      contents: [
-        {
-          uri: WIDGET_URI,
-          mimeType: RESOURCE_MIME_TYPE,
-          text: WIDGET_HTML,
-          _meta: {
-            ui: {
-              prefersBorder: false,
-              csp: {
-                connectDomains: [],
-                resourceDomains: [],
-              },
+  registerAppResource(server, "pdf-widget", WIDGET_URI, {}, async () => ({
+    contents: [
+      {
+        uri: WIDGET_URI,
+        mimeType: RESOURCE_MIME_TYPE,
+        text: WIDGET_HTML,
+        _meta: {
+          ui: {
+            prefersBorder: false,
+            csp: {
+              connectDomains: [],
+              resourceDomains: [],
             },
-            "openai/widgetDescription":
-              "AI Summarizer shows bilingual English and Arabic summaries, key points, action items, and reusable posts from source content.",
           },
+          "openai/widgetDescription":
+            "Smart PDF Assistant provides a minimal Arabic-first file processing panel for PDF operations and download results.",
         },
-      ],
-    })
+      },
+    ],
+  }));
+
+  registerAppTool(
+    server,
+    "merge_pdfs",
+    {
+      title: "Merge PDFs",
+      description:
+        "Use this when the user wants to combine two or more PDF files into a single PDF, optionally sorted by file name.",
+      inputSchema: {
+        files: z
+          .array(fileReferenceSchema)
+          .min(2)
+          .max(MAX_FILES_PER_REQUEST)
+          .describe("PDF file references authorized for this app. Each file should include download_url."),
+        sort_by_name: z
+          .boolean()
+          .default(false)
+          .describe("Sort files alphabetically by file_name before merging."),
+        output_name: z.string().optional().describe("Optional output PDF file name."),
+      },
+      outputSchema: baseOperationOutputSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        openWorldHint: false,
+      },
+      _meta: {
+        ui: { resourceUri: WIDGET_URI },
+        "openai/outputTemplate": WIDGET_URI,
+        "openai/toolInvocation/invoking": "دمج ملفات PDF",
+        "openai/toolInvocation/invoked": "اكتمل دمج ملفات PDF",
+      },
+    },
+    async ({ files, sort_by_name = false, output_name }) => {
+      const structuredContent = await mergePdfs({
+        files,
+        sort_by_name,
+        output_name,
+        publicBaseUrl,
+      });
+
+      return {
+        content: [{ type: "text" as const, text: structuredContent.summary_ar }],
+        structuredContent,
+      };
+    }
   );
 
   registerAppTool(
     server,
-    "analyze_content",
+    "split_pdf",
     {
-      title: "Analyze content",
+      title: "Split PDF",
       description:
-        "AI Summarizer turns pasted text, transcript notes, YouTube transcripts, article notes, podcast notes, meeting notes, and lecture notes into concise bilingual Arabic-English briefs.",
+        "Use this when the user wants to split one PDF into page ranges such as 1-3,4-8.",
       inputSchema: {
-        content: z
+        file: fileReferenceSchema.describe("The source PDF file reference authorized for this app."),
+        ranges: z
           .string()
           .min(1)
-          .describe("The source text, transcript, notes, or link context to analyze."),
-        title: z
-          .string()
-          .optional()
-          .describe("Optional source title. If absent, AI Summarizer derives one from the content."),
-        sourceType: sourceTypeSchema
-          .default("text")
-          .describe("The kind of source being analyzed."),
-        outputStyle: outputStyleSchema
-          .default("executive")
-          .describe("The format and tone of the brief."),
-        language: languageSchema
-          .default("bilingual")
-          .describe("The display language for the brief. Use bilingual unless the user asks for one language only."),
+          .describe("Comma-separated page ranges, for example 1-3,4-8,10."),
+        output_prefix: z.string().optional().describe("Optional prefix for generated PDF files."),
       },
-      outputSchema: analysisOutputSchema,
+      outputSchema: baseOperationOutputSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        openWorldHint: false,
+      },
+      _meta: {
+        ui: { resourceUri: WIDGET_URI },
+        "openai/outputTemplate": WIDGET_URI,
+        "openai/toolInvocation/invoking": "تقسيم ملف PDF",
+        "openai/toolInvocation/invoked": "اكتمل تقسيم ملف PDF",
+      },
+    },
+    async ({ file, ranges, output_prefix }) => {
+      const structuredContent = await splitPdf({
+        file,
+        ranges,
+        output_prefix,
+        publicBaseUrl,
+      });
+
+      return {
+        content: [{ type: "text" as const, text: structuredContent.summary_ar }],
+        structuredContent,
+      };
+    }
+  );
+
+  registerAppTool(
+    server,
+    "extract_invoice_data",
+    {
+      title: "Extract invoice data",
+      description:
+        "Use this when the user wants to extract structured invoice fields from a PDF invoice without guessing missing values.",
+      inputSchema: {
+        file: fileReferenceSchema.describe("The invoice PDF file reference authorized for this app."),
+      },
+      outputSchema: invoiceOutputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -270,65 +219,25 @@ function createAppServer(): McpServer {
       _meta: {
         ui: { resourceUri: WIDGET_URI },
         "openai/outputTemplate": WIDGET_URI,
-        "openai/toolInvocation/invoking": "Building AI Summarizer brief / جاري إنشاء الملخص",
-        "openai/toolInvocation/invoked": "AI Summarizer brief ready / الملخص جاهز",
+        "openai/toolInvocation/invoking": "استخراج بيانات الفاتورة",
+        "openai/toolInvocation/invoked": "اكتمل استخراج بيانات الفاتورة",
       },
     },
-    async ({
-      content,
-      title,
-      sourceType = "text",
-      outputStyle = "executive",
-      language = "bilingual",
-    }: {
-      content: string;
-      title?: string;
-      sourceType?: SourceType;
-      outputStyle?: OutputStyle;
-      language?: Language;
-    }) => {
-      const normalizedContent = content.trim();
-      const resolvedTitle = makeTitle(normalizedContent, title);
-      const keyPoints = createKeyPoints(normalizedContent);
-      const keyPointsAr = createArabicKeyPoints(keyPoints);
-      const summary = createSummary(normalizedContent, outputStyle);
-      const summaryAr = createArabicSummary(normalizedContent, outputStyle);
-      const actionItems = createActionItems(sourceType, outputStyle);
-      const actionItemsAr = createArabicActionItems(sourceType, outputStyle);
-      const words = wordCount(normalizedContent);
-
-      const structuredContent = {
-        title: resolvedTitle,
-        sourceType,
-        outputStyle,
-        language,
-        summary,
-        summaryAr,
-        keyPoints,
-        keyPointsAr,
-        actionItems,
-        actionItemsAr,
-        reusablePost: createReusablePost(resolvedTitle, keyPoints),
-        reusablePostAr: createArabicReusablePost(resolvedTitle, keyPoints),
-        stats: {
-          characters: normalizedContent.length,
-          words,
-          estimatedReadingMinutes: Math.max(1, Math.ceil(words / 220)),
-        },
-      };
+    async ({ file }) => {
+      const structuredContent = await extractInvoiceData({
+        file,
+        publicBaseUrl,
+      });
 
       return {
         content: [
           {
             type: "text" as const,
             text:
-              "AI Summarizer created a bilingual structured brief. / أنشأ AI Summarizer ملخصًا منظمًا بالعربي والإنجليزي.",
+              "تم استخراج بيانات الفاتورة كـ JSON مع درجات ثقة. القيم غير الموجودة تظهر null.",
           },
         ],
         structuredContent,
-        _meta: {
-          rawPreview: normalizedContent.slice(0, 1200),
-        },
       };
     }
   );
@@ -336,14 +245,26 @@ function createAppServer(): McpServer {
   return server;
 }
 
-const port = Number(process.env.PORT ?? "8787");
-const MCP_PATH = "/mcp";
-const SSE_PATH = "/sse";
-const MESSAGES_PATH = "/messages";
-const sseSessions = new Map<
-  string,
-  { transport: SSEServerTransport; server: McpServer }
->();
+function clientKey(req: { socket: { remoteAddress?: string }; headers: Record<string, string | string[] | undefined> }): string {
+  const forwardedFor = req.headers["x-forwarded-for"];
+  if (typeof forwardedFor === "string") {
+    return forwardedFor.split(",")[0]?.trim() || "unknown";
+  }
+
+  return req.socket.remoteAddress ?? "unknown";
+}
+
+function isAppRoute(pathname: string): boolean {
+  return (
+    pathname === MCP_PATH ||
+    pathname.startsWith(MCP_PATH + "/") ||
+    pathname === SSE_PATH ||
+    pathname === MESSAGES_PATH
+  );
+}
+
+await ensureStorage();
+startCleanupTimer();
 
 createServer(async (req, res) => {
   if (!req.url) {
@@ -354,6 +275,12 @@ createServer(async (req, res) => {
   const url = new URL(req.url, "http://" + (req.headers.host ?? "localhost"));
   const isMcpRoute = url.pathname === MCP_PATH || url.pathname.startsWith(MCP_PATH + "/");
   const isSseRoute = url.pathname === SSE_PATH || url.pathname === MESSAGES_PATH;
+  const publicBaseUrl = process.env.PUBLIC_BASE_URL ?? makePublicBaseUrl(req);
+
+  if (isAppRoute(url.pathname) && isRateLimited(clientKey(req))) {
+    res.writeHead(429, { "content-type": "text/plain" }).end("Rate limit exceeded");
+    return;
+  }
 
   if (req.method === "OPTIONS" && (isMcpRoute || isSseRoute)) {
     res.writeHead(204, {
@@ -367,7 +294,7 @@ createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/") {
-    res.writeHead(200, { "content-type": "text/plain" }).end("AI Summarizer MCP server");
+    res.writeHead(200, { "content-type": "text/plain; charset=utf-8" }).end("Smart PDF Assistant MCP server");
     return;
   }
 
@@ -376,19 +303,33 @@ createServer(async (req, res) => {
     return;
   }
 
-  if (
-    req.method === "GET" &&
-    (url.pathname === "/privacy" || url.pathname === "/privacy-policy")
-  ) {
+  if (req.method === "GET" && (url.pathname === "/privacy" || url.pathname === "/privacy-policy")) {
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(PRIVACY_HTML);
     return;
   }
 
-  if (
-    req.method === "GET" &&
-    (url.pathname === "/terms" || url.pathname === "/terms-of-use")
-  ) {
+  if (req.method === "GET" && (url.pathname === "/terms" || url.pathname === "/terms-of-use")) {
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(TERMS_HTML);
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname.startsWith("/downloads/")) {
+    const id = url.pathname.replace("/downloads/", "").trim();
+    const file = await readOutputFile(id);
+    const bytes = await readOutputFileBytes(id);
+
+    if (!file || !bytes) {
+      res.writeHead(404, { "content-type": "text/plain" }).end("File not found or expired");
+      return;
+    }
+
+    res.writeHead(200, {
+      "content-type": file.mimeType,
+      "content-length": String(file.sizeBytes),
+      "content-disposition": `attachment; filename="${encodeURIComponent(file.fileName)}"`,
+      "cache-control": "private, max-age=1800",
+    });
+    res.end(bytes);
     return;
   }
 
@@ -398,7 +339,7 @@ createServer(async (req, res) => {
     res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
 
     const transport = new SSEServerTransport(MESSAGES_PATH, res);
-    const server = createAppServer();
+    const server = createAppServer(publicBaseUrl);
     sseSessions.set(transport.sessionId, { transport, server });
 
     res.on("close", () => {
@@ -409,7 +350,7 @@ createServer(async (req, res) => {
     try {
       await server.connect(transport);
     } catch (error) {
-      console.error("Failed to open SSE transport:", error);
+      console.error("Failed to open SSE transport:", error instanceof Error ? error.message : error);
       sseSessions.delete(transport.sessionId);
       server.close();
       if (!res.headersSent) {
@@ -434,7 +375,7 @@ createServer(async (req, res) => {
     try {
       await session.transport.handlePostMessage(req, res);
     } catch (error) {
-      console.error("Failed to handle SSE message:", error);
+      console.error("Failed to handle SSE message:", error instanceof Error ? error.message : error);
       if (!res.headersSent) {
         res.writeHead(500).end("Internal server error");
       }
@@ -446,7 +387,7 @@ createServer(async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
 
-    const server = createAppServer();
+    const server = createAppServer(publicBaseUrl);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
@@ -461,7 +402,7 @@ createServer(async (req, res) => {
       await server.connect(transport);
       await transport.handleRequest(req, res);
     } catch (error) {
-      console.error("Failed to handle MCP request:", error);
+      console.error("Failed to handle MCP request:", error instanceof Error ? error.message : error);
       if (!res.headersSent) {
         res.writeHead(500).end("Internal server error");
       }
@@ -471,6 +412,6 @@ createServer(async (req, res) => {
 
   res.writeHead(404).end("Not Found");
 }).listen(port, () => {
-  console.log("AI Summarizer MCP server listening on http://localhost:" + port + MCP_PATH);
-  console.log("AI Summarizer SSE endpoint available on http://localhost:" + port + SSE_PATH);
+  console.log("Smart PDF Assistant MCP server listening on http://localhost:" + port + MCP_PATH);
+  console.log(`Max file size: ${Math.round(MAX_FILE_SIZE_BYTES / 1024 / 1024)}MB`);
 });

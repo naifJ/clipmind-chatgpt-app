@@ -1,68 +1,100 @@
-# AI Summarizer ChatGPT App
+# Smart PDF Assistant
 
-AI Summarizer is a starter ChatGPT App that turns source content into a structured brief with:
+Smart PDF Assistant is a minimal ChatGPT Apps SDK application for PDF workflows inside ChatGPT. It exposes MCP tools for PDF operations and a simple RTL iframe widget for upload/status/result/download.
 
-- summary
-- key points
-- action items
-- reusable social post
-- source stats
+## MVP Tools
 
-It is built as an Apps SDK/MCP app with a Node server and a vanilla HTML widget.
+- `merge_pdfs`: merge two or more PDFs into one PDF.
+- `split_pdf`: split one PDF using page ranges such as `1-3,4-8`.
+- `extract_invoice_data`: extract invoice fields as JSON with confidence scores.
 
-## Run Locally
+## TODO
+
+- `compress_pdf`: PDF compression with Ghostscript or another replaceable service.
+- `ocr_pdf`: OCR for scanned PDFs/images with Tesseract.js or a configurable OCR service.
+- `analyze_contract`: Arabic contract summary, key terms, risky clauses, dates, parties, and obligations.
+
+## Local Setup
 
 ```bash
 npm install
-npm run check
+npm run dev
+```
+
+Production-style local run:
+
+```bash
+npm run build
 npm start
 ```
 
 The MCP endpoint runs at:
 
-```txt
+```text
 http://localhost:8787/mcp
 ```
 
-An SSE-compatible endpoint is also available for clients that still ask for `/sse`:
+Preview the iframe widget:
 
-```txt
-http://localhost:8787/sse
-```
-
-The health check runs at:
-
-```txt
-http://localhost:8787/
-```
-
-The local widget preview runs at:
-
-```txt
+```text
 http://localhost:8787/preview
 ```
 
-## Connect In ChatGPT
+## ChatGPT Developer Mode
 
-1. Start the local server with `npm start`.
-2. Expose it with an HTTPS tunnel, for example `ngrok http 8787`.
-3. In ChatGPT, enable Developer Mode in Apps & Connectors advanced settings.
-4. Create a new app/connector that points to the tunneled URL plus `/mcp`. If the UI specifically asks for an SSE URL, use `/sse`.
-5. Ask ChatGPT to use AI Summarizer to analyze pasted content.
+1. Run the server locally.
+2. Expose it with HTTPS, for example:
 
-## Main Tool
+```bash
+ngrok http 8787
+```
 
-`analyze_content`
+3. In ChatGPT, enable Developer Mode from Apps & Connectors advanced settings.
+4. Create a new app and use:
 
-Use this when the user wants to turn pasted text, transcript notes, YouTube transcript notes, article notes, podcast notes, meeting notes, or lecture notes into a concise AI Summarizer brief.
+```text
+https://YOUR-TUNNEL.ngrok-free.app/mcp
+```
 
-Inputs:
+5. Authentication: `No authentication`.
 
-- `content`: source text or notes
-- `title`: optional title
-- `sourceType`: `text`, `youtube`, `article`, `podcast`, `meeting`, or `lecture`
-- `outputStyle`: `executive`, `student`, `creator`, or `research`
+## Render Deployment
 
-## Notes
+This project is ready for Render through the repository `Dockerfile`.
 
-This MVP does not call the OpenAI API directly. ChatGPT supplies the reasoning layer, while this MCP server structures the content and renders the widget.
+Recommended environment variables:
+
+```text
+PUBLIC_BASE_URL=https://your-service.onrender.com
+MAX_FILE_SIZE_MB=20
+MAX_FILES_PER_REQUEST=10
+OUTPUT_TTL_MINUTES=30
+RATE_LIMIT_PER_MINUTE=40
+ALLOW_EXTERNAL_OCR=false
+```
+
+## File Input Shape
+
+Tools accept ChatGPT file references in this shape:
+
+```json
+{
+  "file_id": "optional-id",
+  "download_url": "https://temporary-download-url",
+  "file_name": "invoice.pdf",
+  "mime_type": "application/pdf"
+}
+```
+
+## Example Tool Calls
+
+See [tests/mcp-examples.md](../tests/mcp-examples.md).
+
+## Security
+
+- Files are fetched from app-authorized temporary URLs.
+- Only PDF MIME/type/magic bytes are accepted for PDF tools.
+- Executable uploads are not accepted.
+- Temporary output files expire automatically.
+- Logs avoid file content and only log operational errors.
+- The current MVP does not send files to external OCR or AI services.

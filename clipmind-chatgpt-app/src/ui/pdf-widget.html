@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart PDF Assistant</title>
+    <style>
+      :root {
+        color: #172033;
+        background: #f7f8fb;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 14px;
+        background: #f7f8fb;
+      }
+
+      .card {
+        width: min(100%, 760px);
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+        border: 1px solid #dbe3ee;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      header {
+        display: grid;
+        gap: 5px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.2;
+      }
+
+      p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.6;
+      }
+
+      .drop {
+        display: grid;
+        gap: 10px;
+        place-items: center;
+        min-height: 170px;
+        padding: 18px;
+        border: 1px dashed #94a3b8;
+        border-radius: 8px;
+        background: #fbfdff;
+        text-align: center;
+      }
+
+      .drop.dragging {
+        border-color: #172033;
+        background: #f1f5f9;
+      }
+
+      input[type="file"] {
+        width: 100%;
+        max-width: 310px;
+      }
+
+      .files {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .files li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        color: #334155;
+        background: #f8fafc;
+        font-size: 13px;
+      }
+
+      button,
+      .download {
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #172033;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font: inherit;
+        font-weight: 800;
+        color: #fff;
+        background: #172033;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 11px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        color: #334155;
+        background: #f8fafc;
+        font-weight: 700;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #64748b;
+      }
+
+      .status[data-state="ready"] .dot {
+        background: #64748b;
+      }
+
+      .status[data-state="processing"] .dot {
+        background: #f59e0b;
+      }
+
+      .status[data-state="completed"] .dot {
+        background: #22c55e;
+      }
+
+      .status[data-state="error"] .dot {
+        background: #ef4444;
+      }
+
+      .result {
+        display: none;
+        gap: 10px;
+        padding-top: 4px;
+      }
+
+      .result.visible {
+        display: grid;
+      }
+
+      .summary {
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        color: #263449;
+        background: #fbfdff;
+        line-height: 1.65;
+      }
+
+      pre {
+        max-height: 260px;
+        overflow: auto;
+        margin: 0;
+        padding: 12px;
+        direction: ltr;
+        text-align: left;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        color: #263449;
+        background: #f8fafc;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+
+      .download-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      @media (max-width: 520px) {
+        body {
+          padding: 10px;
+        }
+
+        .card {
+          padding: 14px;
+        }
+
+        h1 {
+          font-size: 20px;
+        }
+
+        .status {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <header>
+        <h1 id="operation-title">Smart PDF Assistant</h1>
+        <p>ارفع ملفات PDF، ثم اكتب طلبك في المحادثة. ChatGPT سيختار الأداة المناسبة.</p>
+      </header>
+
+      <section class="drop" id="drop-zone">
+        <strong>اسحب ملفات PDF هنا</strong>
+        <p>أو اختر الملفات من جهازك. الواجهة لا تعرض أدوات كثيرة، فقط رفع وحالة ونتيجة.</p>
+        <input id="file-input" type="file" accept="application/pdf,.pdf" multiple />
+      </section>
+
+      <ul class="files" id="file-list" aria-label="الملفات المرفوعة"></ul>
+
+      <button id="start-button" type="button">ابدأ المعالجة</button>
+
+      <section class="status" id="status" data-state="ready" aria-live="polite">
+        <span><span class="dot"></span> <span id="status-text">جاهز</span></span>
+        <span id="status-note">بانتظار الملفات أو نتيجة الأداة.</span>
+      </section>
+
+      <section class="result" id="result">
+        <div class="summary" id="summary">ستظهر النتيجة هنا بعد اكتمال المعالجة.</div>
+        <pre id="json-result" hidden></pre>
+        <div class="download-list" id="downloads"></div>
+      </section>
+    </main>
+
+    <script type="module">
+      const operationTitleEl = document.querySelector("#operation-title");
+      const dropZoneEl = document.querySelector("#drop-zone");
+      const fileInputEl = document.querySelector("#file-input");
+      const fileListEl = document.querySelector("#file-list");
+      const startButtonEl = document.querySelector("#start-button");
+      const statusEl = document.querySelector("#status");
+      const statusTextEl = document.querySelector("#status-text");
+      const statusNoteEl = document.querySelector("#status-note");
+      const resultEl = document.querySelector("#result");
+      const summaryEl = document.querySelector("#summary");
+      const jsonResultEl = document.querySelector("#json-result");
+      const downloadsEl = document.querySelector("#downloads");
+
+      let localFiles = [];
+      let uploadedFiles = [];
+      let rpcId = 0;
+      const pendingRequests = new Map();
+      const isStandalonePreview = window.parent === window || window.location.protocol === "file:";
+
+      const stateLabels = {
+        ready: "جاهز",
+        processing: "جاري المعالجة",
+        completed: "اكتمل",
+        error: "حدث خطأ",
+      };
+
+      function setStatus(state, note) {
+        statusEl.dataset.state = state;
+        statusTextEl.textContent = stateLabels[state] ?? stateLabels.ready;
+        statusNoteEl.textContent = note;
+      }
+
+      function formatBytes(size) {
+        if (!Number.isFinite(size)) return "";
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+        return `${(size / 1024 / 1024).toFixed(1)} MB`;
+      }
+
+      function renderFiles() {
+        const files = uploadedFiles.length ? uploadedFiles : localFiles;
+        fileListEl.replaceChildren(
+          ...files.map((file) => {
+            const li = document.createElement("li");
+            const name = document.createElement("span");
+            const meta = document.createElement("span");
+            name.textContent = file.fileName || file.name || "document.pdf";
+            meta.textContent = file.mimeType || file.type || formatBytes(file.size);
+            li.append(name, meta);
+            return li;
+          })
+        );
+      }
+
+      async function uploadFiles(files) {
+        localFiles = [...files];
+        uploadedFiles = [];
+        renderFiles();
+
+        if (!files.length) {
+          setStatus("ready", "بانتظار رفع ملف PDF.");
+          return;
+        }
+
+        if (!window.openai?.uploadFile) {
+          setStatus(
+            "ready",
+            isStandalonePreview
+              ? "وضع المعاينة: اختر الملفات ثم اطلب المعالجة داخل ChatGPT."
+              : "رفع الملفات المباشر غير متاح هنا. أرفق الملف في رسالة ChatGPT."
+          );
+          return;
+        }
+
+        setStatus("processing", "جاري رفع الملفات إلى ChatGPT...");
+        try {
+          for (const file of files) {
+            const uploaded = await window.openai.uploadFile(file, { library: false });
+            uploadedFiles.push({
+              fileId: uploaded.fileId,
+              fileName: file.name,
+              mimeType: file.type || "application/pdf",
+              size: file.size,
+            });
+          }
+          setStatus("ready", "تم رفع الملفات. اكتب طلبك أو اضغط ابدأ المعالجة.");
+          renderFiles();
+        } catch {
+          setStatus("error", "تعذر رفع الملفات. أرفقها مباشرة في رسالة ChatGPT.");
+        }
+      }
+
+      fileInputEl.addEventListener("change", () => uploadFiles(fileInputEl.files ?? []));
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropZoneEl.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropZoneEl.classList.add("dragging");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        dropZoneEl.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropZoneEl.classList.remove("dragging");
+        });
+      });
+
+      dropZoneEl.addEventListener("drop", (event) => {
+        uploadFiles(event.dataTransfer?.files ?? []);
+      });
+
+      function rpcNotify(method, params) {
+        if (isStandalonePreview) return;
+        window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+      }
+
+      function rpcRequest(method, params) {
+        return new Promise((resolve, reject) => {
+          if (isStandalonePreview) {
+            reject(new Error("MCP Apps bridge is not available in standalone preview."));
+            return;
+          }
+
+          const id = ++rpcId;
+          pendingRequests.set(id, { resolve, reject });
+          window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+        });
+      }
+
+      window.addEventListener(
+        "message",
+        (event) => {
+          if (event.source !== window.parent) return;
+          const message = event.data;
+          if (!message || message.jsonrpc !== "2.0") return;
+
+          if (typeof message.id === "number") {
+            const pending = pendingRequests.get(message.id);
+            if (!pending) return;
+            pendingRequests.delete(message.id);
+            message.error ? pending.reject(message.error) : pending.resolve(message.result);
+            return;
+          }
+
+          if (message.method === "ui/notifications/tool-result") {
+            renderResult(message.params?.structuredContent);
+          }
+        },
+        { passive: true }
+      );
+
+      function renderResult(result) {
+        if (!result) return;
+
+        operationTitleEl.textContent = operationName(result.operation);
+        setStatus(result.status ?? "completed", result.summary_ar ?? "اكتملت العملية.");
+        resultEl.classList.add("visible");
+        summaryEl.textContent = result.summary_ar || result.summary_en || "اكتملت العملية.";
+        downloadsEl.replaceChildren();
+
+        const files = result.files ?? [];
+        for (const file of files) {
+          const link = document.createElement("a");
+          link.className = "download";
+          link.href = file.download_url;
+          link.download = file.file_name;
+          link.target = "_blank";
+          link.rel = "noreferrer";
+          link.textContent = `تحميل ${file.file_name}`;
+          downloadsEl.append(link);
+        }
+
+        if (result.invoice_data) {
+          jsonResultEl.hidden = false;
+          jsonResultEl.textContent = JSON.stringify(result.invoice_data, null, 2);
+        } else {
+          jsonResultEl.hidden = true;
+          jsonResultEl.textContent = "";
+        }
+      }
+
+      function operationName(operation) {
+        const names = {
+          merge_pdfs: "دمج ملفات PDF",
+          split_pdf: "تقسيم ملف PDF",
+          extract_invoice_data: "استخراج بيانات فاتورة",
+        };
+        return names[operation] ?? "Smart PDF Assistant";
+      }
+
+      startButtonEl.addEventListener("click", async () => {
+        if (isStandalonePreview) {
+          setStatus("ready", "هذه معاينة فقط. داخل ChatGPT ارفع الملف واكتب طلب المعالجة.");
+          return;
+        }
+
+        const fileText = uploadedFiles.length
+          ? uploadedFiles.map((file) => `- ${file.fileName} (${file.fileId})`).join("\n")
+          : "لم يتم رفع ملفات من الواجهة. استخدم الملفات المرفقة في المحادثة إن وجدت.";
+
+        if (window.openai?.sendFollowUpMessage) {
+          await window.openai.sendFollowUpMessage({
+            prompt:
+              "ابدأ معالجة ملفات PDF حسب طلبي السابق. لا تخمن العملية، وإذا كان طلبي ناقصاً اسألني عن المعلومة الناقصة فقط.\n\nالملفات:\n" +
+              fileText,
+          });
+        } else {
+          rpcNotify("ui/message", {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text:
+                  "ابدأ معالجة ملفات PDF حسب طلبي السابق. لا تخمن العملية، وإذا كان طلبي ناقصاً اسألني عن المعلومة الناقصة فقط.\n\nالملفات:\n" +
+                  fileText,
+              },
+            ],
+          });
+        }
+      });
+
+      async function initializeBridge() {
+        if (isStandalonePreview) {
+          setStatus("ready", "وضع المعاينة المحلي.");
+          return;
+        }
+
+        await rpcRequest("ui/initialize", {
+          appInfo: { name: "smart-pdf-assistant-widget", version: "0.1.0" },
+          appCapabilities: {},
+          protocolVersion: "2026-01-26",
+        });
+        rpcNotify("ui/notifications/initialized", {});
+        setStatus("ready", "متصل بـ ChatGPT.");
+      }
+
+      initializeBridge().catch(() => {
+        setStatus("error", "تعذر الاتصال بواجهة ChatGPT.");
+      });
+
+      const initialOutput = window.openai?.toolOutput;
+      if (initialOutput) {
+        renderResult(initialOutput);
+      }
+    </script>
+  </body>
+</html>
