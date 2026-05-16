@@ -1,0 +1,14 @@
+{
+  "name": "stirling-pdf-chatgpt-root",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix chatgpt-app ci && npm --prefix chatgpt-app run build",
+    "start": "npm --prefix chatgpt-app start",
+    "test": "npm --prefix chatgpt-app test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

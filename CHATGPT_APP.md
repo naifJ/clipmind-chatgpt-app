@@ -36,3 +36,19 @@ https://YOUR-DOMAIN/mcp
 ```
 
 The server supports no-auth testing by default. Set `API_KEY` if you want bearer-token protection.
+
+## Render Deployment
+
+If the existing Render service is not managed by `render.yaml`, set these values in the Render dashboard:
+
+- Root Directory: `chatgpt-app`
+- Build Command: `npm ci && npm run build`
+- Start Command: `npm start`
+- Node Version: `22`
+- Environment Variables:
+  - `PUBLIC_BASE_URL=https://clipmind-chatgpt-app.onrender.com`
+  - `STIRLING_BASE_URL=<your running Stirling-PDF backend URL>`
+  - `STIRLING_PUBLIC_URL=<your public Stirling-PDF UI URL>`
+  - `MAX_FILE_MB=50`
+
+The root `package.json` also forwards old root-level Node commands to `chatgpt-app/`, which helps existing Render services that still build from the repository root.
