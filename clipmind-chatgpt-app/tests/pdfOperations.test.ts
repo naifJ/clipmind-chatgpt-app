@@ -5,7 +5,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import type { FileReference } from "../src/lib/types.js";
 import { mergePdfs } from "../src/tools/mergePdfs.js";
 import { splitPdf } from "../src/tools/splitPdf.js";
-import { addWatermark, deletePages, reorderPages } from "../src/tools/pdfProTools.js";
+import { addWatermark, deletePages, imagesToPdf, reorderPages } from "../src/tools/pdfProTools.js";
 
 const publicBaseUrl = "http://localhost:8787";
 
@@ -29,6 +29,18 @@ function pdfRef(bytes: Buffer, fileName: string): FileReference {
     download_url: `data:application/pdf;base64,${bytes.toString("base64")}`,
     file_name: fileName,
     mime_type: "application/pdf",
+  };
+}
+
+function pngRef(): FileReference {
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
+    "base64"
+  );
+  return {
+    download_url: `data:image/png;base64,${png.toString("base64")}`,
+    file_name: "pixel.png",
+    mime_type: "image/png",
   };
 }
 
@@ -83,4 +95,23 @@ test("reorderPages, deletePages, and addWatermark create output PDFs", async () 
     publicBaseUrl,
   });
   assert.equal(watermarked.status, "completed");
+
+  const imageWatermarked = await addWatermark({
+    file: source,
+    watermark_image: pngRef(),
+    publicBaseUrl,
+  });
+  assert.equal(imageWatermarked.status, "completed");
+});
+
+test("imagesToPdf creates a PDF from PNG input", async () => {
+  const result = await imagesToPdf({
+    images: [pngRef()],
+    output_name: "image-output.pdf",
+    publicBaseUrl,
+  });
+
+  assert.equal(result.status, "completed");
+  assert.equal(result.files.length, 1);
+  assert.equal(result.files[0]?.mime_type, "application/pdf");
 });

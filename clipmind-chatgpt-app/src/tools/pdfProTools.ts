@@ -32,6 +32,19 @@ function parsePageSet(pageSpec: string | undefined, pageCount: number): Set<numb
   return pages;
 }
 
+async function embedRasterImage(pdf: PDFDocument, file: FileReference) {
+  const bytes = await fetchFileBytes(file);
+  const name = (file.file_name ?? "").toLowerCase();
+  const mime = (file.mime_type ?? "").toLowerCase();
+  if (mime.includes("jpeg") || mime.includes("jpg") || name.endsWith(".jpg") || name.endsWith(".jpeg")) {
+    return pdf.embedJpg(bytes);
+  }
+  if (mime.includes("png") || name.endsWith(".png")) {
+    return pdf.embedPng(bytes);
+  }
+  throw new Error("Only PNG and JPG images are supported.");
+}
+
 async function loadPdf(file: FileReference): Promise<{ bytes: Buffer; pdf: PDFDocument; fileName: string }> {
   const bytes = await fetchFileBytes(file);
   assertPdfFile(file, bytes);
@@ -220,30 +233,51 @@ export async function compressPdf(params: {
 
 export async function addWatermark(params: {
   file: FileReference;
-  text: string;
+  text?: string;
+  watermark_image?: FileReference;
   pages?: string;
   opacity?: number;
   font_size?: number;
   output_name?: string;
 } & PublicBase): Promise<WidgetOperationResult> {
   const { pdf, fileName } = await loadPdf(params.file);
+  if (!params.text?.trim() && !params.watermark_image) {
+    throw new Error("Watermark text or image is required.");
+  }
+
   const selected = parsePageSet(params.pages, pdf.getPageCount());
   const font = await pdf.embedFont(StandardFonts.HelveticaBold);
   const opacity = Math.max(0.05, Math.min(params.opacity ?? 0.18, 0.8));
   const fontSize = Math.max(10, Math.min(params.font_size ?? 44, 96));
+  const image = params.watermark_image ? await embedRasterImage(pdf, params.watermark_image) : undefined;
 
   pdf.getPages().forEach((page, index) => {
     if (!selected.has(index + 1)) return;
     const { width, height } = page.getSize();
-    page.drawText(params.text, {
-      x: width * 0.18,
-      y: height * 0.48,
-      size: fontSize,
-      font,
-      color: rgb(0.15, 0.2, 0.3),
-      opacity,
-      rotate: degrees(-28),
-    });
+
+    if (params.text?.trim()) {
+      page.drawText(params.text, {
+        x: width * 0.18,
+        y: height * 0.48,
+        size: fontSize,
+        font,
+        color: rgb(0.15, 0.2, 0.3),
+        opacity,
+        rotate: degrees(-28),
+      });
+    }
+
+    if (image) {
+      const targetWidth = Math.min(width * 0.42, 260);
+      const scale = targetWidth / image.width;
+      page.drawImage(image, {
+        x: (width - targetWidth) / 2,
+        y: (height - image.height * scale) / 2,
+        width: targetWidth,
+        height: image.height * scale,
+        opacity,
+      });
+    }
   });
 
   const output = await saveOutputFile({
@@ -259,7 +293,13 @@ export async function addWatermark(params: {
     summary_ar: "تمت إضافة العلامة المائية إلى ملف PDF.",
     summary_en: "Added the watermark to the PDF.",
     files: [output],
-    details: { pages: [...selected], text: params.text, opacity, font_size: fontSize },
+    details: {
+      pages: [...selected],
+      text: params.text ?? null,
+      image_watermark: Boolean(params.watermark_image),
+      opacity,
+      font_size: fontSize,
+    },
   };
 }
 
@@ -501,6 +541,38 @@ export async function pdfToImages(params: {
   } finally {
     await parser.destroy();
   }
+}
+
+export async function imagesToPdf(params: {
+  images: FileReference[];
+  output_name?: string;
+} & PublicBase): Promise<WidgetOperationResult> {
+  if (!params.images.length) {
+    throw new Error("At least one image is required.");
+  }
+
+  const pdf = await PDFDocument.create();
+  for (const imageFile of params.images) {
+    const image = await embedRasterImage(pdf, imageFile);
+    const page = pdf.addPage([image.width, image.height]);
+    page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+  }
+
+  const output = await saveOutputFile({
+    bytes: await pdf.save(),
+    fileName: params.output_name ?? "images-to-pdf.pdf",
+    mimeType: "application/pdf",
+    publicBaseUrl: params.publicBaseUrl,
+  });
+
+  return {
+    operation: "images_to_pdf",
+    status: "completed",
+    summary_ar: `تم تحويل ${params.images.length} صور إلى ملف PDF.`,
+    summary_en: `Converted ${params.images.length} images to a PDF.`,
+    files: [output],
+    details: { image_count: params.images.length },
+  };
 }
 
 export async function comparePdfs(params: {

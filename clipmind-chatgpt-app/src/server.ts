@@ -31,6 +31,7 @@ import {
   extractImages,
   extractText,
   fillPdfForm,
+  imagesToPdf,
   ocrPdf,
   pdfToImages,
   reorderPages,
@@ -437,7 +438,8 @@ function createAppServer(publicBaseUrl: string): McpServer {
       description: "Use this when the user wants to add a text watermark to selected pages or the whole PDF.",
       inputSchema: {
         file: fileReferenceSchema,
-        text: z.string().min(1),
+        text: z.string().min(1).optional(),
+        watermark_image: fileReferenceSchema.optional(),
         pages: z.string().optional(),
         opacity: z.number().min(0.05).max(0.8).optional(),
         font_size: z.number().min(10).max(96).optional(),
@@ -447,14 +449,23 @@ function createAppServer(publicBaseUrl: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       _meta: {
         ui: { resourceUri: WIDGET_URI },
-        "openai/fileParams": ["file"],
+        "openai/fileParams": ["file", "watermark_image"],
         "openai/outputTemplate": WIDGET_URI,
         "openai/toolInvocation/invoking": "إضافة علامة مائية",
         "openai/toolInvocation/invoked": "اكتملت إضافة العلامة المائية",
       },
     },
-    async ({ file, text, pages, opacity, font_size, output_name }) => {
-      const structuredContent = await addWatermark({ file, text, pages, opacity, font_size, output_name, publicBaseUrl });
+    async ({ file, text, watermark_image, pages, opacity, font_size, output_name }) => {
+      const structuredContent = await addWatermark({
+        file,
+        text,
+        watermark_image,
+        pages,
+        opacity,
+        font_size,
+        output_name,
+        publicBaseUrl,
+      });
       return { content: [{ type: "text" as const, text: structuredContent.summary_ar }], structuredContent };
     }
   );
@@ -615,6 +626,32 @@ function createAppServer(publicBaseUrl: string): McpServer {
 
   registerAppTool(
     server,
+    "images_to_pdf",
+    {
+      title: "Images to PDF",
+      description: "Use this when the user wants to convert one or more PNG/JPG images into a PDF.",
+      inputSchema: {
+        images: z.array(fileReferenceSchema).min(1).max(MAX_FILES_PER_REQUEST),
+        output_name: z.string().optional(),
+      },
+      outputSchema: baseOperationOutputSchema,
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+      _meta: {
+        ui: { resourceUri: WIDGET_URI },
+        "openai/fileParams": ["images"],
+        "openai/outputTemplate": WIDGET_URI,
+        "openai/toolInvocation/invoking": "تحويل الصور إلى PDF",
+        "openai/toolInvocation/invoked": "اكتمل تحويل الصور إلى PDF",
+      },
+    },
+    async ({ images, output_name }) => {
+      const structuredContent = await imagesToPdf({ images, output_name, publicBaseUrl });
+      return { content: [{ type: "text" as const, text: structuredContent.summary_ar }], structuredContent };
+    }
+  );
+
+  registerAppTool(
+    server,
     "compare_pdfs",
     {
       title: "Compare PDFs",
@@ -670,7 +707,6 @@ function createAppServer(publicBaseUrl: string): McpServer {
     "replace_image_or_logo",
     "export_to_word",
     "export_to_powerpoint",
-    "images_to_pdf",
     "repair_pdf",
     "advanced_visual_diff",
     "analyze_contract",
